@@ -1,0 +1,2258 @@
+springboot
+microservices
+kafka
+lld
+java
+rabbit mq and all
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Coding by Shrayansh Springbhoot notes
+Spring boot annotation
+*@Controller tells this class is reposnsible for handling incoming request
+*@Rst controller is controller with response body
+*
+
+
+
+*Note here @respnsebody is required with @Controller annotations to tell its the rest response 
+
+2.*@Controller
+public class HomeController {
+
+    @RequestMapping(path='/ap' metod="Post")
+@Respose Body
+    public String sayHello(Model model) {
+        model.addAttribute("message", "Hello from Controller!");
+        return "hello";  // returns hello.html (Thymeleaf) or hello.jsp depending on setup
+    }
+}
+*so here if we dont give response body it ill consider hello s the view nd lokk for jsp instead of taking as rest response
+
+
+
+
+3.package com.example.demo.controller;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@Requestmaping(value="/api/")
+public class ApiController {
+
+    @GetMapping("/api/hello")
+    public String sayHello() {
+        return "Hello from RestController!";
+    }
+}
+
+but here restcontrooler s already controller + respose body
+
+Note:basically request mappin map the api end  point to cotroller method
+*So if we go to the RequestMapping annottaions we have diffrenet ways like the  @RequestMapping(path='/ap' metod="Post") means specific api end point will map yto this only
+*@Requestmaping(value="/api/") endpoint common but along with this we need to use the getmapping annottaions too
+*
+*
+
+
+2.Requestpram annottations maps the request paramether with the controller method parameter
+*Request parameter always starts after the ?
+*
+@RestController
+public class UserApiController {
+
+    // Example: GET /api/user?name=Neha&age=25
+    @GetMapping("/api/user")
+    public String getUser(
+             @RequestParam(name="firstname") String name,
+            @RequestParam( value="lastName",required = false, defaultValue = "18") int age) { {
+        
+        return "User name: " + name + ", Age: " + age;
+    }
+}
+so url is /api /?firstname="neha" so map the firstname to string name
+*So in request param annotation we can have the name as the attribute or value as attribute theta points to request requestparameter
+*we can mark any atrrivute as required as false too 
+*Note: in above example we can see that the the requestparameters will always be in string and then the typecasting to int age is handled itself
+*
+*By default the all the parameters are required but we can set it to false also
+*Note:i want that the beore the url parameter being assign the method paramete we need to validate and then put we can use the propertyeditor 
+*package com.example.demo.controller;
+
+import com.example.demo.editor.FirstNamePropertyEditor;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api")
+public class SampleController {
+
+    // Register custom editor for "firstName" field
+    @InitBinder
+    protected void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, "firstName", new FirstNamePropertyEditor());
+    }
+
+    // Example: GET /api/fetchUser?firstName=ShrayAn&lastName=Raghav&age=25
+    @GetMapping("/fetchUser")
+    public String getUserDetails(
+            @RequestParam(name = "firstName") String firstName,
+            @RequestParam(name = "lastName", required = false) String lastName,
+            @RequestParam(name = "age") int age) {
+
+        return "Fetching and returning user details based on: " +
+                "firstName = " + firstName +
+                ", lastName = " + lastName +
+                ", age = " + age;
+    }
+}
+*This menas for this controller apis check in request parameter is firstname than create object of the firstNmapepropertyEdiotor
+*
+
+package com.example.demo.editor;
+
+import java.beans.PropertyEditorSupport;
+
+public class FirstNamePropertyEditor extends PropertyEditorSupport {
+
+    @Override
+    public void setAsText(String text) throws IllegalArgumentException {
+        // Convert to lowercase and trim spaces
+        setValue(text.trim().toLowerCase());
+    }
+}
+
+
+3.@Patvraiale extract the vale from url and put in the method parameter
+*package com.example.demo.controller;
+
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api")
+public class UserController {
+
+    // Example: GET /api/user/101
+    @GetMapping("/user/{id}")
+    public String getUserById(@PathVariable(value="id") int userId) {
+        return "Fetching user with ID: " + userId;
+    }
+}
+
+Note:here also @PathVariable(name="" or value="" both will work
+*
+4.@RequestBody bind the http request body that is in json with the method prameters which is java objects
+*
+*package com.example.demo.controller;
+
+import com.example.demo.model.User;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    // Example: POST /api/users/add
+    @PostMapping("/add")
+    public String addUser(@RequestBody User user) {
+        return "User created: Name = " + user.getName() + ", Age = " + user.getAge();
+    }
+}
+Note:here gson and Jackson library is used by springboot to map  the request body with clas user
+class User{
+String username.
+String password
+}
+
+
+now in the request i send{user_name:""
+}
+*so we can than write @jsonProperty annotation at the username property
+*class User{
+@jsonproperty("user_name")
+String username.
+String password
+}
+
+
+*@ResponeEnity is the htpwhole respons object with the status with the body and with the headers
+*@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getUser(@PathVariable int id) {
+        if (id == 1) {
+            return ResponseEntity.ok("User found: Neha"); // 200 OK wih body as userfound
+        } else {
+            return ResponseEntity.status(404).body("User not found"); // 404 Not Found with body as suer not found
+        }
+    }
+}
+Note:that if we return string simply tha its conevreted to ResponseEntity<String>
+*
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+What is Bean
+*Bean is basically a java object
+*which is managed by the ioc container
+*ioc conteianer sees the configuration and create beans and  the beans
+*How to create the bean
+1.Componnet annotation
+2.bean annotation
+
+1.Uisng the componenet annotations
+*This follows the convention over configuration approach
+*Means springboot will automatically configure based on conventions
+*means it will automatically create object of class anotted with @componnet internally and create object using the default contructor we are not telling how to create the object measn we are not providing the configuration details
+*all the @Controller and @Service uses the @componnet annottaions internally
+package com.example.test;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class User {
+    String userName;
+    String password;
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+
+
+
+Note:Now thw thing that comes in is that that now suppose i passed the custom cobstructir here
+*Now the thing is that springbbot applicatiom sees its annotated with @Componnet but now it cant use default constructor to create the object and for custom constructor it does not know what to pass in constructor
+*so aour applivation fails to start
+*So now we want to provide the configuration details to create the beans
+*for that we will
+public class User {
+    String userName;
+    String password;
+public void User(name,password){
+this.name=name
+this.password
+}
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+
+
+*@Configuration
+public class JpaConfig {
+
+    //adding since all auditor is system
+    @Bean
+    User createUser() {
+        return new User("neha",9neharaghav2gmail.com)
+    }
+}
+*Now the thing is that the now spring boot will create the bean object using the configuration detaisl provided by us
+*Now the question arise we have the scenraios like the @Configuration
+public class JpaConfig {
+
+    //adding since all auditor is system
+    @Bean
+    User createUser() {
+        return new User("neha",9neharaghav2gmail.com)
+    }
+}
+and the now we also applied @componnet
+@Component
+public class User {
+    String userName;
+    String password;
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+
+Then in this case too the java baded configuration in which we provide configuration details will work fastly
+*Now the scenario is import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public User createUserBean() {
+        return new User("defaultUsername", "defaultemail");
+    }
+
+    @Bean
+    public User createAnotherUserBean() {
+        return new User("anotherUsername", "anotheremail");
+    }
+}
+Here the beans will be created in order
+*Now the 2 question arises
+1.How springboot find these benas
+2.When beans is created
+
+Lets try to find the answer of this
+1.How springbbot find these beans?
+
+Using the @componetscan on the main spring application class springbbot will scan all pacakges and subpacakges to find the class annotated with @componnet
+*@ComponentScan(basePackages = "com.welh")
+@EnableConfigurationProperties({
+
+
+Using the springboot will find the class annotated with @Configuration
+*and then create the beans of that
+
+
+
+2.At what time beans get created
+1.it get created as soon as we start the application-eagernbess ,beans with singleton scope is eagerly initilized
+2.It gets created only when we wanted-lazy beans with the prototype scope is lazy initialized
+
+*
+
+
+
+
+
+
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+Sprig lifecycle
+1. Bean Instantiation
+*Spring creates an instance of the bean (using reflection or constructor injection).
+*@Component
+public class MyBean {
+    public MyBean() {
+        System.out.println("1️⃣ Bean is instantiated");
+    }
+}
+
+
+
+2.Dependency Injection (Populate Properties)
+2. Dependency Injection (Populate Properties)
+
+Spring injects dependencies (@Autowired, constructor args, etc.).
+
+
+3.
+📒 Spring Beans – Notes
+00:00 – What is Bean
+
+A Bean is an object managed by the Spring IoC container.
+
+It is created, configured, and maintained by Spring.
+
+Beans are the backbone of a Spring application.
+
+01:00 – How to Create Bean (@Component annotation)
+
+Annotate a class with @Component (or stereotypes like @Service, @Repository, @Controller).
+
+Spring automatically detects it using component scanning.
+
+@Component
+public class MyService {
+    public void serve() {
+        System.out.println("Service is running...");
+    }
+}
+
+05:16 – How to Create Bean (@Bean + @Configuration)
+
+Use @Configuration on a class and @Bean on methods.
+
+Useful when you want to create beans manually (e.g., third-party classes).
+
+@Configuration
+public class AppConfig {
+    @Bean
+    public MyService myService() {
+        return new MyService();
+    }
+}
+
+10:55 – @ComponentScan annotation
+
+Tells Spring where to search for components.
+
+By default, it scans the package of the main class.
+
+@SpringBootApplication
+@ComponentScan(basePackages = "com.example.demo")
+public class DemoApplication {}
+
+14:01 – Eagerly Initialized vs. Lazy-initialized Bean (@Lazy)
+
+Eager Initialization (default): Bean created at application startup.
+
+Lazy Initialization: Bean created only when it’s first requested.
+
+@Component
+@Lazy
+public class LazyService {
+    public LazyService() {
+        System.out.println("LazyService bean created!");
+    }
+}
+
+16:40 – Lifecycle of Bean (@PostConstruct & @PreDestroy)
+
+Spring beans have a lifecycle (creation → initialization → destruction).
+
+Hooks:
+
+@PostConstruct → Runs after bean initialization.
+
+@PreDestroy → Runs before bean is destroyed.
+
+@Component
+public class LifecycleBean {
+
+    @PostConstruct
+    public void init() {
+        System.out.println("Bean is initialized ✅");
+    }
+
+    @PreDestroy
+    public void cleanup() {
+        System.out.println("Bean is being destroyed ❌");
+    }
+}
+
+
+✅ Quick Summary
+
+Bean = Spring-managed object.
+
+Create Beans → @Component (auto) OR @Bean in @Configuration (manual).
+
+ComponentScan → Tells Spring where to find beans.
+
+Eager vs Lazy → Default is eager; @Lazy makes it lazy.
+
+Lifecycle → Use @PostConstruct & @PreDestroy for custom init/destroy logic.
+
+Do you want me to also add a diagram of the bean lifecycle here so you can remember it visually during revision?
+
+You said:
+Do you want me to also add a diagram of the bean lifecycle here so you can remember it visually during revision?
+ChatGPT said:
+
+Yes 👍 a diagram will help a lot in remembering the Spring Bean lifecycle.
+Here’s a simple visual flow you can keep in your notes:
+
+🌱 Spring Bean Lifecycle
+       ┌───────────────┐
+       │ Bean Instantiation │
+       └───────┬─────────┘
+               │
+               ▼
+       ┌──────────────────┐
+       │ Dependency Injection │
+       └───────┬─────────┘
+               │
+               ▼
+       ┌──────────────────────────┐
+       │ @PostConstruct (Init Method) │
+       └───────┬─────────────────┘
+               │
+               ▼
+       ┌────────────────────────────┐
+       │   Bean is Ready (In Use)   │
+       └───────┬───────────────────┘
+               │
+               ▼
+       ┌─────────────────────────────┐
+       │ @PreDestroy (Destroy Method)│
+       └───────────┬────────────────┘
+                   │
+                   ▼
+            ❌ Bean Destroyed
+
+
+✅ Key Points in the Diagram
+
+Instantiation → Spring creates the bean object.
+
+Dependency Injection → Spring injects required dependencies.
+
+Initialization → Runs methods annotated with @PostConstruct.
+
+Ready to Use → Bean serves requests.
+
+Destruction → Before shutdown, @PreDestroy is called.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Dependency injection in springbboot
+
+public class User {
+Order d=new Order();
+}
+Now suppose this example is actually tigh coupling
+*suppose in future now we make the Order as interface and many class implemenst it than the issue here comes
+*So first issue is tigh coupling 
+*public class User {
+Order d=new Onlineorder();
+}
+*we did this but again it breaks the solid principle d which says do not depnds on concrete classes depends on the abstraction
+*So to acahive the dependency inversion rule
+*public class User {
+Order d
+User(OnlineOrder o)
+{this.d=o
+}
+*Instaed of writing this whole code toa cheive the dependency inversion we follow the dependency injection
+*
+
+
+
+Dependency injection
+*So dependency injevtion helps there should be no tight coupling
+*another problem is that now our code also does not depends on the concrete implementation instead but inject the dependencies using the external source
+*So there are many ways of depenedency injevtion one is 
+1.Field injection
+*Here the dpendency is set into the fields directly
+*Spring uses reflection to iterate over fields of class and inject the dependency
+*public class User {
+    @Autowired
+Order d;
+}
+
+*So here its firsrt sees ohk one field dependency nneds to be resolve so it first create object of order than user beans created
+*import org.springframework.stereotype.Component;
+
+@Component
+public class Order {
+
+    public Order() {
+        System.out.println("1️⃣ Order constructor called");
+    }
+}
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class User {
+
+    @Autowired
+    Order d;
+
+    public User() {
+        System.out.println("2️⃣ User constructor called");
+    }
+}
+
+Cons:Its verey easy
+pros:here you cant make the field as the final we can make it final but gaian it will not work like final as during reflection this final is ignored
+chances of null pointer exception comes here as suupose create the object user User ob=new User()
+obj.o.call()//then null pointer exception
+*set in Mockito unit testing is difficykt
+
+
+
+
+
+2.Setter injection
+*Dependency is set into the fields using the setter method
+*@Component
+public class User {
+
+    public Order order;
+
+    public User() {
+        System.out.println("User initialized");
+    }
+
+    @Autowired
+    public void setOrderDependency(Order order) {
+        this.order = order;
+    }
+}
+Pros:Here the deondency ordet cab be changed at any time like this order can be online order or something at any time
+*Here mocking is easy
+Cons:Here the same thing that we cant make the  public Order order; this as final
+
+
+
+3.Constructor injection
+*Here the dependency is injected in the field at the initialization of object
+*@Component
+public class User {
+
+    Order order;
+
+    @Autowired
+    public User(Order order) {
+        this.order = order;
+        System.out.println("User initialized");
+    }
+}
+Note:theis autowired is applied to all parameters ib the constructors  public User(Order order)
+*Note:from spring version 4.3 if we have one constructor than the applying the autowire is not manadatory
+*
+Pros:
+1.Here we are 100% sure our deoendency so no null pointer excepetions
+2.Second thing is that the here the fields can be made the final
+3.testing is easy
+
+
+Common issues while dealing with the dependency injections are 
+1.Circular dependency problem
+*@Component
+public class Order {
+
+    @Autowired
+    Invoice invoice;
+
+    public Order() {
+        System.out.println("order initialized");
+    }
+}
+and the 
+@Component
+public class Invoice {
+
+    @Autowired
+    Order order;
+
+    public Invoice() {
+        System.out.println("invoice initialized");
+    }
+}
+
+Note:Here point is that the log will be order initizlized and order initilaized
+and then invoice initialized and order initialized
+
+So most prominent solution of this is that the think of the 
+1.Refactor the code such that the common code from both lass should be in one file
+2.Option will be the apply 2Lazy on the one of the autowired so that it will create the bean proxy
+@Component
+@Lazy
+public class Order {
+
+    public Order() {
+        System.out.println("Order initialized");
+    }
+}
+
+3.Postruct use
+*so here after bean is iniylized we can add the postcontsruct there
+*@Component
+public class Order {
+
+    @Autowired
+    Invoice invoice;
+
+    public Order() {
+        System.out.println("Order initialized");
+    }
+
+    @PostConstruct
+    public void initialize() {
+        invoice.setOrder(this);
+    }
+}
+@Component
+public class Invoice {
+
+    public Order order;
+
+    public Invoice() {
+        System.out.println("Invoice initialized");
+    }
+
+    public void setOrder(Order order) {
+        this.order = order;
+    }
+}
+
+
+
+
+
+
+
+2.Problem is the Unsatisfied dependency
+@Component
+public class User {
+
+    @Autowired
+    Order order;
+
+    public User() {
+        System.out.println("User initialized");
+    }
+}
+public interface Order {
+}
+@Component
+public class OnlineOrder implements Order {
+
+    public OnlineOrder() {
+        System.out.println("Online order initialized");
+    }
+}
+@Component
+public class OfflineOrder implements Order {
+
+    public OfflineOrder() {
+        System.out.println("Offline order initialized");
+    }
+}
+
+Note:You’ve got multiple implementations of the same interface (Order), so Spring gets confused. Let’s first write the base code, then I’ll show how to fix it using @Primary and @Qualifier.
+
+
+1.2️⃣ Solution 1 — Using @Primary ✅
+@Component
+@Primary
+public class OnlineOrder implements Order {
+
+    public OnlineOrder() {
+        System.out.println("Online order initialized");
+    }
+}
+
+
+
+
+2.Solution 2 — Using @Qualifier ✅ (Recommended)
+
+Use this when you want explicit control.
+@Component("onlineOrder")
+public class OnlineOrder implements Order {
+
+    public OnlineOrder() {
+        System.out.println("Online order initialized");
+    }
+}
+
+@Component("onlineOrder")
+public class OnlineOrder implements Order {
+
+    public OnlineOrder() {
+        System.out.println("Online order initialized");
+    }
+}
+
+@Component("onlineOrder")
+public class OnlineOrder implements Order {
+
+    public OnlineOrder() {
+        System.out.println("Online order initialized");
+    }
+}
+
+
+
+*
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Dependenc injection was make a loss couling and to remve thedependy of one class on another,spring iternally manage it
+*It si done by constructor,getetr an dsetter and field injection also called the autowired
+1.1.Field injection
+*so when  see autowired seen it say find the beans if found just ijectit here 
+*If not found create the bean and inject it
+
+Note:autowired does not work with immutable or we can say the final 
+*@Component
+public class MyService {
+    @Autowired
+    private MyRepository repo; // might be null if used too early
+
+    public void serve() {
+        repo.findAll(); // ❌ can cause NPE if repo not injected yet
+    }
+}
+here Myservice m=new myservice()//caal default constructor and now its initlozed the repo to null and when we get the serve method we get null pointer exception
+*Note:so dont create the object using constructor as the dependent object might have not been initialized
+*
+
+
+2️⃣ Setter Injection
+
+Injects dependency through a setter method.
+
+@Component
+public class Car {
+
+    private Engine engine;
+
+    @Autowired
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+    }
+
+    public void start() {
+        engine.run();
+    }
+}
+
+
+✅ Pros
+
+More testable than field injection.
+
+Allows optional dependencies (you can skip calling setter).
+
+Good if dependency can change later.
+
+❌ Cons
+
+Still allows the object to be in an incomplete state (engine could be null until setter is called).
+
+3️⃣ Constructor Injection (Recommended ✅)
+
+Injects dependency via the constructor.
+
+@Component
+public class Car {
+
+    private final Engine engine; // final → immutability
+
+    @Autowired // optional in Spring Boot 2.5+ if only one constructor
+    public Car(Engine engine) {
+        this.engine = engine;
+    }
+
+    public void start() {
+        engine.run();
+    }
+}
+
+
+✅ Pros
+
+Best practice in Spring Boot.
+
+Makes class immutable.
+
+Forces all required dependencies to be present at object creation.
+
+Great for unit testing (easy to pass mocks).
+
+❌ Cons
+
+More verbose than field injection.
+
+If too many dependencies → constructor becomes bloated (which is actually a sign of bad design).
+
+
+
+recommendation of the constructor injection is because 
+*we are 100% sure our dependency is initialized
+*Wecan create th eimmutable objects 
+*so by default if we dont add th autowird it will go with constructor injection and initilzw order with null and we get the null pointer exception in the runtime
+*
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Perfect 🚀 — I’ll give you complete examples with logging for
+
+Field Injection
+
+Setter Injection
+
+Constructor Injection (✅ best practice)
+
+Circular Dependency problem + solutions
+
+And in each example, the Engine bean will log when it is created, so you can see the lifecycle clearly.
+
+⚙️ Common Engine Bean (with constructor logging)
+import org.springframework.stereotype.Component;
+
+@Component
+public class Engine {
+
+    public Engine() {
+        System.out.println("✅ Engine object created by Spring");
+    }
+
+    public void run() {
+        System.out.println("🚗 Engine running...");
+    }
+}
+
+1️⃣ Field Injection Example (❌ not recommended)
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class CarFieldInjection {
+
+    @Autowired
+    private Engine engine; // FIELD INJECTION
+
+    public CarFieldInjection() {
+        System.out.println("CarFieldInjection object created");
+    }
+
+    public void start() {
+        System.out.println("CarFieldInjection starting...");
+        engine.run();
+    }
+}
+
+Logs
+✅ Engine object created by Spring
+CarFieldInjection object created
+CarFieldInjection starting...
+🚗 Engine running...
+
+
+⚠️ Problem → engine can be null until Spring injects it. Hard to test/mock.
+
+2️⃣ Setter Injection Example
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class CarSetterInjection {
+
+    private Engine engine;
+
+    public CarSetterInjection() {
+        System.out.println("CarSetterInjection object created");
+    }
+
+    @Autowired
+    public void setEngine(Engine engine) {
+        this.engine = engine;
+        System.out.println("✅ Engine injected via setter");
+    }
+
+    public void start() {
+        System.out.println("CarSetterInjection starting...");
+        engine.run();
+    }
+}
+
+Logs
+✅ Engine object created by Spring
+CarSetterInjection object created
+✅ Engine injected via setter
+CarSetterInjection starting...
+🚗 Engine running...
+
+
+⚠️ Problem → Bean can exist without engine until setter runs → incomplete state.
+
+3️⃣ Constructor Injection Example (✅ best practice)
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class CarConstructorInjection {
+
+    private final Engine engine;
+
+    @Autowired  // optional if only one constructor
+    public CarConstructorInjection(Engine engine) {
+        this.engine = engine;
+        System.out.println("✅ Engine injected via constructor");
+    }
+
+    public void start() {
+        System.out.println("CarConstructorInjection starting...");
+        engine.run();
+    }
+}
+
+Logs
+✅ Engine object created by Spring
+✅ Engine injected via constructor
+CarConstructorInjection starting...
+🚗 Engine running...
+
+
+✅ Advantage → Engine is always available (no null), Car is immutable, easy for unit tests.
+
+4️⃣ Circular Dependency Problem (❌)
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+class A {
+    @Autowired
+    private B b;
+    public A() {
+        System.out.println("A created");
+    }
+}
+
+@Component
+class B {
+    @Autowired
+    private A a;
+    public B() {
+        System.out.println("B created");
+    }
+}
+
+Logs / Error
+Error creating bean with name 'a': Requested bean is currently in creation: Is there an unresolvable circular re
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Spring security
+*
+                        SPRING SECURITY REQUEST FLOW
+
+Request
+   |
+   v
++-------------------+
+|   Servlet         |
+|   Container       |
+|   (Tomcat)        |
++-------------------+
+           |
+           v
++----------------------------------+
+|           Filters Chain          |
+|  +----------------------------+  |
+|  | Filter 1                   |  |
+|  | --------------------------  |  |
+|  | Security Filter Chain      |  |
+|  |   (Authentication, JWT,    |  |
+|  |    Authorization, etc.)    |  |
+|  | --------------------------  |  |
+|  | Filter n                   |  |
+|  +----------------------------+  |
++----------------------------------+
+           |
+           v
++---------------------------+
+|        Servlets           |
+|  +---------------------+  |
+|  | DispatcherServlet   |  |
+|  +---------------------+  |
+|  | Other Servlets      |  |
+|  +---------------------+  |
++---------------------------+
+           |
+           v
++-------------------+
+|   Interceptors    |
+| (HandlerInterceptor)
++-------------------+
+           |
+           v
++-------------------+
+|     Controller    |
++-------------------+
+           |
+           v
+Response (back through Interceptors → Filters → Tomcat)
+
+*Now the thing is that securitywhen we ebable than extra security filter chain added in filters
+*There are different type of authentication like the form based which are stateful than in syttaeless we have baic auth,jwt and the oauth
+*Now this security filter chain consist of many filter for each of the authentication method we have diffrente filter in the security filter chain 
+*                SPRING SECURITY FILTER CHAIN
+
++--------------------------------------------------+
+|                Security Filter Chain             |
++--------------------------------------------------+
+|                                                  |
+|  +--------------------------------------------+  |
+|  | SecurityContextPersistenceFilter           |  |
+|  |  - Loads/Saves SecurityContext             |  |
+|  +--------------------------------------------+  |
+|                                                  |
+|  +--------------------------------------------+  |
+|  | UsernamePasswordAuthenticationFilter       |  |
+|  |  - Handles form login authentication       |  |
+|  +--------------------------------------------+  |
+|                                                  |
+|  +--------------------------------------------+  |
+|  | BasicAuthenticationFilter                  |  |
+|  |  - Handles HTTP Basic authentication       |  |
+|  +--------------------------------------------+  |
+|                                                  |
+|  |                   ...                        |
+|  |           (Other Security Filters)          |
+|  |                   ...                        |
+|                                                  |
+|  +--------------------------------------------+  |
+|  | Security Filter N                          |  |
+|  +--------------------------------------------+  |
+|                                                  |
++--------------------------------------------------+
+
+Request Flow  ↓  (Top to Bottom)
+Response Flow ↑  (Bottom to Top)
+
+
+*suppose we want the formlogin then athe usernamepasswordfilter 
+*if basic auth than the  UsernamePasswordAuthenticationFilter 
+                 SPRING SECURITY AUTHENTICATION FLOW
+
+
+(Security Filter Chain)
+        |
+        | 1. Pass "Authenticate" request
+        v
++----------------------------------+
+|      <<Interface>>               |
+|      AuthenticationManager       |
++----------------------------------+
+        |
+        | (Default Implementation)
+        v
++----------------------------------+
+|         ProviderManager          |
++----------------------------------+
+        |
+        | 2. Delegates authentication
+        v
++----------------------------------+
+|      <<Interface>>               |
+|      AuthenticationProvider      |
++----------------------------------+
+        |
+        |----> DaoAuthenticationProvider-here it has password encoder to store the hashed password and connection to usre details service
+        |         (handles username/password)
+        |
+        |----> JwtAuthenticationProvider
+        |
+        |----> OAuth2LoginAuthenticationProvider
+        |
+        |----> CustomAuthenticationProvider
+        |
+        v
++----------------------------------+
+|        UserDetailsService        |
++----------------------------------+
+        |
+        v
+    we have the inmemory storage or the database to stoe userame and passowrd+----------------------------------+
+|            Database              |
+|        (Load User Details)       |
++----------------------------------+
+
+        ^
+        | 3. Returns fully authenticated object
+        |
++----------------------------------+
+|      AuthenticationManager       |
++----------------------------------+
+        |
+        v
+(SecurityContext updated)
+        |
+        v
+Controller Access Granted
+*now the authenticate object which contains{isauthenticated ,roles:[]} to the autheticationmanager
+*authenticationmanager is an interface
+*provider amanger implemnst it conatisn logic ki map filetr to which provider
+*so it directs request to correct autheticationprovider
+*this authentication provider is agin an interface
+*and many authenticationprovider like daoauthentication provider implements it
+*this provider has all the seeting ofr password encoder and it store user details in the inmemory storage or jdbcmanager
+*after authentication is done for any request this authentication manager sends repsone the authenticate object with value as true or false
+*Then this value if false then particular filter chain will throw error or else the thing is that the 
+*If authenticate object is full true it gets stored in the security context
+*Then after reaching it finally reaches to the dispatcher servelet than interceptor than the controller
+*So the stratre we will add is the springbbot-starter-security
+*---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Spring security part 2
+*Now user authentication and authorization comes after when user is created
+*So our first agenda is create the user
+*when we add the strater-security 
+*then the we can see the loggg password generated line and inmemorydetailsmanager line
+*SO by default the spring secuirity creates the the default user with username as "user"
+*and every time the application starts than a new password is gensrated
+*we hav the SecurityProperties.java
+public static class User {
+
+    /**
+     * Default user name
+     */
+    private String name = "user";
+
+    /**
+     * Password for the default user name
+     */
+    private String password = UUID.randomUUID().toString();
+
+    /**
+     * Granted roles for the default user name
+     */
+    private List<String> roles = new ArrayList<>();
+
+    private boolean passwordGenerated = true;
+
+    // Getters and Setters
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+        this.passwordGenerated = false;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
+    }
+
+    public boolean isPasswordGenerated() {
+        return passwordGenerated;
+    }
+
+    public void setPasswordGenerated(boolean passwordGenerated) {
+        this.passwordGenerated = passwordGenerated;
+    }
+}
+*Now the thing is that the e hav ethe beans which creat ethe object of the inmmeoryuserdetailsmanager
+8@Bean
+public InMemoryUserDetailsManager inMemoryUserDetailsManager(
+        SecurityProperties properties,
+        ObjectProvider<PasswordEncoder> passwordEncoder) {
+
+    SecurityProperties.User user = properties.getUser();
+    List<String> roles = user.getRoles();
+
+    return new InMemoryUserDetailsManager(
+            User.withUsername(user.getName())
+                .password(getOrDeducePassword(user, passwordEncoder.getIfAvailable()))
+                .roles(StringUtils.toStringArray(roles))
+                .build()
+    );
+}
+*private final Map<String, MutableUserDetails> users = new HashMap<>();
+
+public InMemoryUserDetailsManager(UserDetails... users) {
+    for (UserDetails user : users) {
+        createUser(user);
+    }
+}
+
+@Override
+public void createUser(UserDetails user) {
+    Assert.isTrue(!userExists(user.getUsername()), "user should not exist");
+    this.users.put(user.getUsername().toLowerCase(), new MutableUser(user));
+}
+as by default the scope of bean is the singleton only that mens final users will get shared by all,this we call the in memeory
+*Now the question comes can we control the user creation logic
+*Yes the first method is 
+1.in app.properties
+spring.secuirty.user.name
+spring.secuirty.user.password
+spring.secuirty.user.roles
+
+*who will take the responsibility of creating the object of th einmmeory detailmanager
+*so we hav the userdetailsservice which is implemented by the userdetails than we hav ethe inmemorydetailsmanager which implements the the userdetails
+*na dthe inmemorydeatislmanager takes the usedetails as the argument
+*import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+
+        UserDetails user1 = User.withUsername("my_username_1")
+                .password("{noop}password_1")   // {noop} means no encoding
+                .roles("ADMIN")
+                .build();
+
+        UserDetails user2 = User.withUsername("my_username_2")
+                .password("{noop}password_2")
+                .roles("USER")
+                .build();
+
+        return new InMemoryUserDetailsManager(user1, user2);
+    }
+}
+Note:Here we return the inmemoryuserdetailsmanager() which is child of the userdetails service
+*here {noop} means not encoded not hashed
+*we can also uuse {sha256}
+*{bcrypt}
+*Now the thing is taht teh authentication process works like this that the
+1.Fetch the user details for authentication like passowrd
+2.Then check that the password {id} is it {bcypt } or {noop}
+3.if {bcrypt} than also hash the given password and then compared it with the inmemory stored password
+*Password encoder is implemnetd by many classes  like the defaultencoder
+*then the bcyptencoder
+*noopencoder
+*if no encoder tha default encoder first check whats the {id} and delegated to the correct password emcoder implementations
+*import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+        UserDetails user1 = User.withUsername("my_username_1")
+                .password("{bcrypt}" + encoder.encode("my_password_1"))
+                .roles("ADMIN")
+                .build();
+
+        return new InMemoryUserDetailsManager(user1);
+    }
+}
+*Note:I dont want to write the {id} with password so what we can do is we can create the beabs of the specificedpassowrd encoder so that our default password encoder does not goes to the import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+}
+*
+
+
+
+3.I want to store password and all in db
+*import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.Collections;
+
+@Entity
+@Table(name = "user_auth")
+public class UserAuthEntity implements UserDetails {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(unique = true, nullable = false)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    private String role;
+
+    // ---- UserDetails Methods ----
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(
+                new SimpleGrantedAuthority(role)
+        );
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
+    // ---- Getters and Setters ----
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+}
+Note:implemsnt is required because the jwt taken or basic authenticate when we fetch the user from the db the springframework returns the userdetails thats why we use implements the userdetals
+*then ame the userrepository
+*make one service that implemenst the userdetaisl service and ovevride the loadbyusrename method 
+*import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+@Service
+public class UserAuthEntityService implements UserDetailsService {
+
+    @Autowired
+    private UserAuthEntityRepository userAuthEntityRepository;
+
+    public UserDetails save(UserAuthEntity userAuth) {
+        return userAuthEntityRepository.save(userAuth);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username)
+            throws UsernameNotFoundException {
+
+        return userAuthEntityRepository.findByUsername(username)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found"));
+    }
+}
+*than we create the apis 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/auth")
+public class UserAuthController {
+
+    @Autowired
+    private UserAuthEntityService userAuthEntityService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @PostMapping("/register")
+    public ResponseEntity<String> register(
+            @RequestBody UserAuthEntity userAuthDetails) {
+
+        // Hash the password before saving
+        userAuthDetails.setPassword(
+                passwordEncoder.encode(userAuthDetails.getPassword())
+        );
+
+        // Save user
+        userAuthEntityService.save(userAuthDetails);
+
+        return ResponseEntity.ok("User registered successfully");
+    }
+}
+Here  userAuthDetails.setPassword(
+                passwordEncoder.encode(userAuthDetails.getPassword())
+        );
+Just encode the password before saving
+*Note:make another securityconfig.java where you are basically giving the correct password encoder along with saying bypass the uath request for rest authentication is required by writing the import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/auth/register").permitAll()
+                .anyRequest().authenticated()
+            )
+            .csrf(csrf -> csrf.disable())
+            .httpBasic(Customizer.withDefaults());
+
+        return http.build();
+    }
+}
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Form login authentications
+*It a stateful authentication method
+*means serer mainstains the user autheticat state(session)
+*so thatwhen first time username and password send that seion ceated on server am dreturns
+*on subsequent requests from the clinet this username and password is not send again
+*only the session is sent by the clients
+*Note:The default authentication method in spring security is the form login authentication
+*                HTTP SESSION LOGIN FLOW (JSESSIONID)
+
+Client (Browser)                         Server (Servlet Container)
+------------------                       ----------------------------
+
+1. POST /login  (username/password)
+---------------------------------------------->
+
+                                2. Create new HTTP Session
+                                   SESSIONID = #1
+                                   Store session in server memory
+
+<----------------------------------------------
+3. Response
+   Set-Cookie: JSESSIONID=#1
+
+
+4. Next Request
+   GET /api/data
+   Cookie: JSESSIONID=#1
+---------------------------------------------->
+
+                                5. Server searches session
+                                   with SESSIONID = #1
+
+                                --------------------------------
+                                | If Found & Valid             |
+                                | → Fulfill Request            |
+                                --------------------------------
+                                | If Not Found / Invalid       |
+                                | → Redirect to Login Page     |
+                                --------------------------------
+
+<----------------------------------------------
+6. Response returned to client
+
+
+Note:aslo th etime to live for the http session is 30 minutes
+*But we can configure this too
+*and the thing is that we can alos store the http session in db too
+*Now question arises is that why this storing session inmemory bad practice
+*suppose we have 2 service one store session in inmeoety and other has no session stored
+*Now my request goes to server 2 than the it will invalidate the request so storing session in db is good
+*Now in application.properties we can configure server.servlet.session.timeout=1m menas 1 minute of no activity 
+*Will make the session to be expired from inmemory
+*
+
+We can also store the session in db too
+*<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-jdbc</artifactId>
+</dependency>
+*spring.session.store-type=jdbc
+spring.session.jdbc.initialize-schema=always
+server.servlet.session.timeout=5m
+here this initilize-schema line tells ki you create the table in your database
+*Note lets vee flow we have user created and we are providing username and password bby /login
+*flows goes like this request->security filter chain->usernamepasswordautheticationfilter->authentication manager->provider managerr->autheticationprovider->daoautheticationprovider ->it again check if the username exist with the given username and password 
+*Return authenticate object to usernamepasswordautheticationfilter
+*Now the next filter invoked is securitycontext filter
+*it wil create securitycontext object and store the authenticate object inside it 
+*then pass this secuirtycontext object to httpsessionsecuritycontext repo
+*which first create httpsession object and stores the the secuirtycontext object in the httpsession object
+*and return the jsessionid in cookies
+*Then 2 cases
+1.we hit the /login
+then first the login page
+2.if we hit users without the session id it will redirect us to login first
+3.if we hit /users with session id in cookies 
+*================================================================================
+                    SPRING SECURITY SESSION FLOW
+================================================================================
+
+                1. Pass the Request
+                        |
+                        v
++---------------------------------------------------+
+|            SecurityContextHolderFilter            |
+|---------------------------------------------------|
+| 5. Store SecurityContext in SecurityContextHolder|
+|    (Authentication object available for full     |
+|     lifecycle of the request)                     |
++---------------------------------------------------+
+                        |
+                        | 6. Pass SecurityContextHolder
+                        v
++---------------------------------------------------+
+|                AuthorizationFilter                |
+|---------------------------------------------------|
+| Validates if user has required permission         |
+| to access the request                             |
++---------------------------------------------------+
+
+
+                Internally Uses:
+
++---------------------------------------------------+
+|        HttpSessionSecurityContextRepository      |
+|---------------------------------------------------|
+| 2. Try to fetch HttpSession based on JSESSIONID |
+|                                                   |
+| 3. If HttpSession found ->                      |
+|      Get SecurityContext from session           |
+|                                                   |
+| 4. Return SecurityContext to                    |
+|      SecurityContextHolderFilter                |
++---------------------------------------------------+
+
+
+================================================================================
+                 HIGH LEVEL FLOW SUMMARY
+================================================================================
+
+Client Request
+      |
+      v
+SecurityContextHolderFilter
+      |
+      v
+HttpSessionSecurityContextRepository
+      |
+      v
+(SecurityContext loaded from HttpSession using JSESSIONID)
+      |
+      v
+Secuirtcontextholdefilter store the session
+      |
+AuthorizationFilter
+      |
+      v
+Access Granted / Access Denied
+
+
+Note:NoW i want that instead of default login and logout page or page
+2.That we want that public apis need to be bypass the authentication
+*For that we can write our custom secuirtyfilterchain
+*@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/users").permitAll()
+                .anyRequest().authenticated()
+            )
+            .formLogin(Customizer.withDefaults());
+
+        return http.build();
+    }
+}
+
+*Now the authorization has 2 pahses
+1.Its checked at the filter chain level
+2,Its checked at the controller
+*Note:at the filter level ist diffrnet for diffrente authentication method
+*But at the controller level its the same for each authentication method
+*
+Suppose i said ki /user we need authentication we passes the jsession id
+*it will go through the securitycontext holder than the get the security context object from http session repo and store in secuirtycontext holder which is pass through the authorization filter
+*This authorization filter will check that 
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/users").hasRole("USER")
+                .anyRequest().authenticated()
+            )
+            .formLogin(Customizer.withDefaults());
+
+
+*if the the securitycontext holder object securitycontxt role is same as we define in teh custom filter chain if same pass the request else give the forbiddern exception
+*
+How to control the sessions per user
+*so basically one user u1 login in browser ->new session object created
+*same user in another browser login ->new session object created 
+*we can control this session in the @Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/users").hasRole("USER")
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(true)
+            )
+            .formLogin(Customizer.withDefaults());
+
+        return http.build();
+    }
+}
+*Note:we can also set the policies like the IF_REQUIRED which means create the session for only the apis which are not public 
+*ALWAYS:means create the sessions for all the apis whteher its public or not
+*Diadvantages:Its main disadvantages:is its vulnerable to the security issues like csrf and session hijacking
+*session management is big issue
+*Now the thing is that the 
+if there are multiple server we need to store the session in db hence memory lookups 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Basic authentication:
+So the its first of lla the stateless authentication
+*The server need not to store the authentication state called as sessions
+*Now the thing comes that with each request we need to pass the username and password in the authorization headers
+*so with every request:Authorization header<base64(username and password)
+*here the username and password are encoded not encrypted menas it can be decoded 
+*qUESTION ARISES is why do we need to send the username and password in the authorization headers why not the body?
+*1.Due to the http standard 
+2.some people log the request body and query params but headers are not logged
+3.post and put are having the requrest body but get does not thts why
+Now from the form based authetucation 
+requrest->security filter chain->basicautheticationfilter chain->decode th header->authentication manager->provider manager->authentication provider->dao autheticationprovider->check the saved username password->send back auth object ->story in security context filter chain->sne dthe security contxe to authorization filter 
+*import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/users").hasAnyRole("USER")
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .csrf(csrf -> csrf.disable())
+            .httpBasic(Customizer.withDefaults());
+
+        return http.build();
+    }
+}
+
+
+
+Diadvantages:
+*Firstly credentials are passed with every request therefore if https is not enforced that that bas64 can be decoded
+*There is no token or session to invalide so we need to just changes the credentials 
+*
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+JWT  authentication
+*JWT is the secure way of transmitting information between parties as json objects
+*This information can be verifty as its digitally signed using the rsa
+*This jwt is used in authentication,authorization,and single sign on
+*================================================================================
+                        JWT AUTHENTICATION FLOW
+================================================================================
+
+        (1) Login with Username & Password
++--------+  -------------------------------------------->  +-------------------+
+| Client |                                                   | Authentication    |
+|        |  <--------------------------------------------  | Server            |
++--------+     (2) Generate JWT Token and Return            +-------------------+
+                      (JWT)
+
+
+        (3) Request Protected Resource
++--------+  --------------------------------------------------------------+
+| Client |   Authorization: Bearer <JWT_TOKEN>                           |
+|        |  ------------------------------------------------------------>  |
++--------+                                                                 |
+                                                                           v
+                                                               +-------------------+
+                                                               |   Resource Server |
+                                                               +-------------------+
+                                                                       |
+                                                                       | (Optional)
+                                                                       | Validate token
+                                                                       | with Auth Server
+                                                                       v
+                                                               +-------------------+
+                                                               | Authentication    |
+                                                               | Server            |
+                                                               +-------------------+
+
+        (4) If Token Valid
++--------+  <------------------------------------------------------------+
+| Client |         Resource Server Sends Response                        |
++--------+
+
+
+================================================================================
+                        HIGH LEVEL SUMMARY
+================================================================================
+
+1. Client sends username & password to Authentication Server.
+2. Authentication Server generates JWT and sends it back.
+3. Client sends JWT in Authorization header to Resource Server.
+4. Resource Server validates JWT (locally or via Auth Server).
+5. If valid → Access granted.
+   If invalid → Access denied.
+================================================================================
+Note:authetication server is one hwo generate the token
+*So before that we used to have the form based means steful and there we used to hit the db for teh lokup of the session id
+*and in form based for distributed system it was not good
+*lets see the jwt 
+*We have the header.payload.signature
+1.header consist of the metadata about token
+consist of type:jwt,alogo:rsa or hmac
+2.payload consists of the user informationlike 
+for resgistered claims which are the reserved words like iss,sub,exp,aud
+public claims are ones which can be understand by many parties or resource servers
+private claims are one which are not understand by the resource server thay can be understand by the authorization servers
+
+
+3.signature
+first the encode the header than encode the payload
+*than pass it to the rsa('encode1.encode2',private key) while everify than public key
+*Note if using the hmac('encode1.encode2',secret key) while vereifying secret key
+*then again encode the result
+
+
+So total encoded header.encoded payload.encoded signature
+*Advantages:
+1.as ist size is los they can ne passed i headers
+2.we need not to query the database
+
+SSO MEANS 
+one user ->manay appp
+app first return jwt
+usre goes with this jwt to app 2 and app 2 vereifies it from auth server
+
+
+Diadbantages
+:1) Token Invalidation:
+   lets say, I have blacklisted one user,
+   how to invalidate its Token before its expiration?
+
+   a) Server need to keep the list of blacklisted tokens
+      and then DB/cache lookup is required while validating.
+
+   b) Or, change the secret key,
+      but this will make the JWT invalidate for all users.
+
+   c) Or, token should be very short lived.
+
+   d) Or, token should be used only once.
+
+
+2) JWT token is encoded, not encrypted.
+   So its less secure.
+
+   a) Use JWE (means encrypt the payload part).
+
+
+3) Unsecured JWT with "alg": "none",
+   such JWT should be rejected.
+
+
+4) JWK exploit:
+   public key shared in this should not be used
+   to verify the signature.
+
+
+e stands for "exponent"
+n stands for "modulus"
+
+Combined together they form Public Key.
+
+
+{
+  "typ": "JWT",
+  "alg": "RSA"
+}
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+jWT IMPLEMENTAIONS
+*we know how to create the user?
+*lets see how the tokens are generated
+*So springboot by default do not provide jwt implementation
+*Because diffrenet application require diffrenet setup
+1.Some want that in payload id must be there 
+2.and some want signing alogorithm as hmacsome wants rsa
+*
+Note:some important poinst are 
+1.any authentication filter doesnot know which provider to invoke
+2.Its the provider manager who first call the support(authenticate obj) on each provider to decide which provider to call
+
+
+So our first step will be the 
+1.Create our customsecurity filter and put it in the filter chain
+2.create our custom authenticate object
+3.Create our customauthentication provider
+4.add it in the list of all providers
+
+Lets come to the Token creaetion part for thet we need to add the dependency 
+1.<!-- JWT API -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-api</artifactId>
+    <version>0.12.6</version>
+</dependency>
+
+<!-- JWT Implementation -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-impl</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+
+<!-- JWT Jackson (Required for JSON processing) -->
+<dependency>
+    <groupId>io.jsonwebtoken</groupId>
+    <artifactId>jjwt-jackson</artifactId>
+    <version>0.12.6</version>
+    <scope>runtime</scope>
+</dependency>
+
+Now the thing is that the 
+Target->/login w will pass username and password then whole process of matching from the already created user in db happens and then return the jwt this we are wanting to achive
+
+so first step is 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+public class JWTAuthenticationFilter extends OncePerRequestFilter {//because for one request there must be one filter
+
+    private final AuthenticationManager authenticationManager;
+    private final JWTUtil jwtUtil;
+
+    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
+        if (!request.getServletPath().equals("/login")) {
+            filterChain.doFilter(request, response);
+            return;
+        }//if path is login then move to other line also move to other filter 
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        LoginRequest loginRequest =
+                objectMapper.readValue(request.getInputStream(), LoginRequest.class);
+
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(
+                        loginRequest.getUsername(),
+                        loginRequest.getPassword()
+                );
+
+      
+Authentication authResult = authenticationManager.authenticate(authToken);
+
+if (authResult.isAuthenticated()) {
+
+    String token = jwtUtil.generateToken(
+            authResult.getName(),
+            15   // expiry in minutes
+    );
+
+    response.setHeader("Authorization", "Bearer " + token);
+}
+        response.setContentType("application/json");
+        response.getWriter().write("{\"token\":\"" + token + "\"}");
+    }
+}
+
+*
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+
+@Component
+public class JWTUtil {
+
+    private static final String SECRET_KEY = "your-secure-secret-key-min-32bytes";
+
+    private static final SecretKey key =
+            Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+
+    // Generate JWT Token
+    public String generateToken(String username, long expiryMinutes) {
+
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis()
+                        + expiryMinutes * 60 * 1000)) // in milliseconds
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+}
+
+now we above created the custom filter which will pass the request to the daoauthnticateion provider and genetaye the token and custom authentication object that is login request
+*daoauthetication orovider is our default provider now we 
+nneed to update in the provider maanger list (remaining)
+add this as the filter chain 
+
+
+
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.util.Arrays;
+
+@Configuration
+public class SecurityConfig {
+
+    private final JWTUtil jwtUtil;
+    private final DaoAuthenticationProvider daoAuthenticationProvider;
+
+    public SecurityConfig(JWTUtil jwtUtil,
+                          DaoAuthenticationProvider daoAuthenticationProvider) {
+        this.jwtUtil = jwtUtil;
+        this.daoAuthenticationProvider = daoAuthenticationProvider;
+    }
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   AuthenticationManager authenticationManager)
+            throws Exception {
+
+        // Authentication filter for login
+        JWTAuthenticationFilter jwtAuthFilter =
+                new JWTAuthenticationFilter(authenticationManager, jwtUtil);//
+
+        http
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/user-register").permitAll()
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .csrf(csrf -> csrf.disable())
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);//2nd task done
+
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager() {
+        return new ProviderManager(Arrays.asList(daoAuthenticationProvider));//here add in provider manager list task done
+    }
+}
+*and the import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+@Configuration
+public class SecurityBeansConfig {
+
+    private final UserDetailsService userDetailsService;
+
+    public SecurityBeansConfig(UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+
+    @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+
+        return provider;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+
+
+
+
+2.now the user access any unsrestricted rsource with tokem we need to validate that now for thet again we will write our filter
+*
+
+
+
+

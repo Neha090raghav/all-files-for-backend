@@ -1,0 +1,667 @@
+*Suppose we have the 2 microservices 1 we have created using the spring initializer and its runiing on the server.port=8081
+*Suppose we have the another microservice as the product service that is running on the port number 8082
+*Communication between the 2 microservices we have the 
+1.Synchronous communication and the asynchronous communication
+*Here the clinet waits for the server response before continuing means one service will wait for the other service response
+*It si blocking in nature means thread will wait till the response is not received
+*Synchronous communication are 
+1.Rest template
+2.Rest clinet
+3.Feign clinet
+*Note:we use feign clinet as it goes will with the spring clud ,load balancers and the service discovery
+sample api calls
+*GET /orders/1 HTTP/1.1
+Host: localhost:8081
+User-Agent: curl/8.7.1
+Accept: application/json
+
+POST /products HTTP/1.1
+Host: localhost:8081
+User-Agent: curl/8.7.1
+Accept: application/json
+Content-Type: application/json
+Content-Length: 65
+
+{
+  "name": "Ice-Cream",
+  "price": 200
+}
+
+So here the thing is that here accept is what client accepts content type is what the server wants  and content length is in bytes
+*So what happens in the in the http version 1.0 we have the first connction made then request sent then received than connection terminbated between 2 services
+*in http version 1.1 here connection is set to alive menas connection not closed
+*it has 2 parameters
+1.timout=5  menas if the connection is idle for 5s close it
+2.max=50 means that the maximun 50 numbers of requests can be sent sover the same tcp connection
+*
+
+Lets understand the the communication between 2 services using plain java
+*Here is the call to the pther service package com.example.orderservice;
+
+import org.springframework.web.bind.annotation.*;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+    @GetMapping("/{id}")
+    public String getOrder(@PathVariable String id) {
+
+        HttpURLConnection httpURLConnection = null;
+
+        try {
+            // 1️⃣ Create URL
+            String url = "http://localhost:8082/products/" + id;
+            URL obj = new URL(url);
+
+            // 2️⃣ Open Connection
+            httpURLConnection = (HttpURLConnection) obj.openConnection();//here connection is not made its just the made of http object
+
+            // 3️⃣ Set Request Method
+            httpURLConnection.setRequestMethod("GET");
+
+            // 4️⃣ Set Headers
+            httpURLConnection.setRequestProperty("Accept", "application/json");
+
+            // 5️⃣ Set Timeouts
+            httpURLConnection.setConnectTimeout(5000);//means in how much time the connection should be build
+            httpURLConnection.setReadTimeout(5000);mena sin how much the connection will be clsed if idle
+
+            // 6️⃣ Get Response Code
+           
+            // 7️⃣ Read Response
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(httpURLConnection.getInputStream())//connection made and request and response received at this stage//we can use here the httpURLConnection.getResponse code () and connect() too
+            );
+
+            String inputLine;
+            StringBuilder response = new StringBuilder();
+
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+
+            in.close();
+
+            return "Order Service Response -> " + response.toString();
+
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        } finally {
+            if (httpURLConnection != null) {
+                httpURLConnection.disconnect();
+            }
+        }
+    }
+}
+
+*So here what happens basically is that first step is creation of httpurl object
+*then next in (httpURLConnection.getInputStream() it will basically creates the connectsions and sends the request
+*So disadvantage is that the too much boilerplate code for the creation of coonection handling the response manually
+*
+
+Rest Template 
+
+*We have the abstraction of low level code like the creating of the httpurlconnection
+*First of all in appconfo create the beans and create object of rest template like this import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}//in order service
+*import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+    @Autowired
+    RestTemplate restTemplate;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getOrder(@PathVariable String id) {
+
+        // Invoke Product API
+        String response = restTemplate.getForObject(
+                "http://localhost:8082/products/" + id,
+                String.class
+        );
+
+        System.out.println("Response from Product API called from Order service: " + response);
+
+        return ResponseEntity.ok("Order call successful");
+    }
+}
+*Here tyhe we autowired the rest template here String.class is the response
+*other than the getForObject() which returns the response body
+*getForEntity() returns the whole response entity from the sttaus to headers along with the body
+*then we have the postForObject() which basically takes (url,payload,ResponseType) as the parameters
+*thwn we have the exchange()method basically to hwen we want more control we want to set headers and the request body in one http enetuty and the methods we want like the post or get 
+import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
+
+public class OrderServiceClient {
+
+    public static void main(String[] args) {
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        // URL
+        String url = "http://localhost:8080/api/products/";
+
+        // -------------------------
+        // Customizing Headers
+        // -------------------------
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer my-token");
+
+        // -------------------------
+        // Preparing Request Body
+        // -------------------------
+        Product product = new Product();
+        product.setName("Ice-cream");
+        product.setPrice(100);
+
+        // -------------------------
+        // Setting Header + Body
+        // -------------------------
+        HttpEntity<Product> requestEntity =
+                new HttpEntity<>(product, headers);
+
+        // -------------------------
+        // Calling exchange() method
+        // -------------------------
+        ResponseEntity<Product> response =
+                restTemplate.exchange(
+                        url,
+                        HttpMethod.POST,
+                        requestEntity,
+                        Product.class
+                );
+
+        System.out.println("Response Status: " + response.getStatusCode());
+        System.out.println("Response Body: " + response.getBody());
+    }
+}
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Rest Clinet
+*
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
+
+@Configuration
+public class AppConfig {
+
+    @Bean
+    public RestClient restClientInstance() {
+        return RestClient.create();/or RestClinet.builder().build()
+    }
+}
+*import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestClient;
+
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+    @Autowired
+    private RestClient restClient;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getOrder(@PathVariable String id) {
+
+        String response = restClient
+                .get()
+                .uri("http://localhost:8082/products/" + id)
+                .retrieve()
+                .body(String.class);
+
+        System.out.println("Response from Product API called from order service: " + response);
+
+        return ResponseEntity.ok("order call successful");
+    }
+}
+*So its the fluent api
+*means   String response = restClient
+                .get()
+                .uri("http://localhost:8082/products/" + id)
+                .retrieve()
+                .body(String.class);
+Here we have the chaining of methods
+*Each methods returns an object for the next steps to follow the instructions
+*
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Feign is the declarative http cliet thats developed by the Netflix
+*Declarative menas we tell what to do but donyt tell how to do
+*In springboot feign capability is available by the spring cloud openfeign library
+*Spring cloud provides tools and libraries that heps to build distributed mucroservices
+*Tools are the openfwign,service discovery
+*<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+*Here we dont provides the version
+*So actually what happens is that the suppose again we want to add the load balancer or something 
+*than our versions or tools must be compatible
+*<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>2023.0.1</version> <!-- Use latest compatible version -->
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+*So here the to adding version to each tool we add we just write the dependency management
+*We hav the order service running at localhost:8081 and product service on localhost:8082
+*we wnat to call the product service from order service
+*So 
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@FeignClient(
+        name = "product-service",
+        url = "${feign.client.product-service.url}"
+)
+public interface ProductClient {
+
+    @GetMapping("/products/{id}")
+    String getProductById(@PathVariable("id") String id);
+}
+*Here we create the interface and just give the exact path and tell what tp do we tell internally spring implemenst the interface
+*Here in the application.properties =http://localhost:8082
+*Now autowired this i the service import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/orders")
+public class OrderController {
+
+    @Autowired
+    private ProductClient productClient;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getOrder(@PathVariable String id) {
+
+        String responseFromProductAPI = productClient.getProductById(id);
+
+        System.out.println("Response from Product API call is: " + responseFromProductAPI);
+
+        return ResponseEntity.ok("order call successful");
+    }
+}
+*Now the thing is that the we autowired
+*Everuthi we create using the @configuration and the beasn we autowired them to use or any feign clinet we need to autowired them 
+*import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+
+@SpringBootApplication
+@EnableFeignClients
+public class OrderserviceApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(OrderserviceApplication.class, args);
+    }
+}
+*Note please annotate the application with the enablefeignclinet
+*Now the thing is that as the application strats up
+*We have the spring look for the interface with @feignclicnet and for each interface Reactivefeign.newInstance() invokes
+*it has 3 works to do
+*1.for each methods in an interface Create an Object of MethodHandler s
+*MethodHandler object holds complete info that is parsed from a method
+
+and its annotations, which is needed to execute the HTTP request.
+
+Below are some of the fields which MethodHandler object holds:
+Target URL:
+
+Info regarding Base URL + relative path
+
+@FeignClient(name="product-service", url="http://localhost:8082")
+
+@GetMapping("/products/{id}")
+
+
+2.Craete the object of invocationhandler and populate or make the map of map<method,methodhandler>
+*
+
+3.Then create the dynamic proxy mena sthe runtime environmemt menas the real implementation happens here 
+Note:thet the proper ordering is not mandatory here 
+*in the methodhandler we have the encoder and decoder
+*We can also provide the configurations here in fwign cinet which is applicable to that clinet only
+*@FeignClient(
+        name = "product-service",
+        url = "${feign.client.product-service.url}",
+        configuration = ProductClientConfig.class
+)
+public interface ProductClient {
+
+    @PutMapping(
+            value = "/products/update/{id}",
+            consumes = "application/json"
+    )
+    Product updateProduct(
+
+            @PathVariable("id") String id,
+
+            @RequestParam("sendMail") boolean sendMail,
+
+            @RequestHeader("X-ConceptCoding-ID") String uniqueID,
+
+            @RequestBody Product updatedProductDetails
+    );
+}
+*and in the productclinettconfig we can provide our default encoder and decoder bena object which implemenet the encoder and decoder and there override the default encode thing
+*Note that while decoding the 4x and 5x exception goes to the error decode which we can override agin
+*Now in the invokhandler function we have retryer which happens when connection timed out or the network related thing
+*Default it uses the 5 times retries 
+*and time between retries is 100ms
+*and max tim eretie s is 1 second
+*if we want agin not full control we can implement the retry.default
+*want full control that implenet the retryer
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+In microservices the service instance are created dynamically based upon traffic
+*so hardcoding the service instance url is not good
+*suppose the order service is caling the prodct service nad order service hardcode the url of the product service that the request goes to that particular instance of service
+*Also, possible that particular instance is removed
+
+
+                    +----------------------+
+                    |   Product Service    |
+                    |   18.1.1.22:9443     |
+                    +----------------------+
+                             |
+                             |
++------------------+         |        +----------------------+
+|   Order Service  | ------> X ------>|   Product Service    |
+|                  |                  |   17.1.1.22:9443     |
+| product-service  |                  +----------------------+
+| url =17.1.1.22   |
+| :9443            |
++------------------+
+                             |
+                             |
+                    +----------------------+
+                    |   Product Service    |
+                    |   (Another Instance) |
+                    +----------------------+
+
+
+Lets say this instance is removed,
+now Order Service call will fail.
+*So single point of failure
+*No load balancing
+*So solution for this is the service discovery
+*eureka server is like phonebooks that has all the instance info like the instance id, service name,port ,ip of all registrerd clinets
+*eureka clinet is one who register itself with eureka clinet and also find the instance of other service
+
+So lets setup the eureka server
+*First make one microservice
+*1.add the dependency of eurek server
+*Then has the 2enableeurekserve annotation on main springboot application class
+*then in application .properties add eureka.clinet-register-with-eurek as false and eureka.fetch-registrey as false
+*server.port=8761
+
+
+So lets make the eureka cine
+*Here in product service
+*here then in application .properties add eureka.clinet-register-with-eurek as false and eureka.fetch-registrey as true
+*eureka.clinet-service-url.defaultzone=http://localhost/8761/eureka
+*
+
+                     +----------------------+
+                     |     Order Service    |
+                     +----------------------+
+                               |
+                               | 1. Give me the list of
+                               |    instances of Product Service
+                               v
+                     +----------------------+
+                     |     Eureka Server    |
+                     +----------------------+
+                               |
+                               | 2. Returns the
+                               |    Product Service
+                               |    instances details
+                               v
+                     +----------------------+
+                     |     Order Service    |
+                     +----------------------+
+                               |
+                               | 3. Choose an instance
+                               |    (using Load Balancer)
+                               |    and invoke endpoint
+                               v
+                     +----------------------+
+                     |    Product Service   |
+                     +----------------------+
+
+Now thses services get registred
+*Now we are using the resttemplate
+*Then there first we need to 
+@autowired Discoveryclinet discoveryclinet
+*import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.client.RestTemplate;
+
+import java.net.URI;
+import java.util.List;
+
+public class ProductServiceCaller {
+
+    @Autowired
+    private DiscoveryClient discoveryClient;
+
+    public void callProductAPI(String id) {
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 1. Fetching the instances of "product-service"
+        List<ServiceInstance> instances =
+                discoveryClient.getInstances("product-service");
+
+        // 2. Load balancer logic to choose a particular instance
+        URI uri = instances.get(0).getUri();
+
+        String response = restTemplate.getForObject(
+                uri + "/products/" + id,
+                String.class
+        );
+
+        System.out.println("Response from Product API call is: " + response);
+    }
+}
+
+
+Some question comes to the mind that
+1.Hows does the ureka server know any service or instance is down or not
+ 1.when any service down it send de-registration request to the eureka server and eureka server makrs as donw
+ 2.second is that along with this the eureka server receive the heartbeat for each instance if not than it automatically shuts it down and this time we can configure by in prduct service # Every 60 seconds client will send the heartbeat to server
+eureka.instance.lease-renewal-interval-in-seconds=60
+
+
+# Telling server to wait this much time, if no heartbeat received in this time,
+# then remove me from the registry
+# For testing kept it less than lease-renewal-interval
+eureka.instance.lease-expiration-duration-in-seconds=5
+
+
+and also on eureka servre we need to add that if no heartbeat for this time remove the instance
+*
+
+
+2.How eureka server stores the data 
+*The image explains how the Eureka Server stores registered service instances internally.
+It keeps everything in-memory using a map like:
+
+Map<String, Lease<InstanceInfo>>
+
+Where:
+
+Key → appName/instanceId
+
+Value → Lease<InstanceInfo> object containing instance metadata.
+
+
+
+3.Is eureka single point of failure
+*If yes then sure for single
+1️⃣ Eureka Server 1 (Port 8761)
+
+application.properties
+
+server.port=8761
+spring.application.name=eureka-server
+
+eureka.client.register-with-eureka=true
+eureka.client.fetch-registry=true
+
+eureka.client.service-url.defaultZone=http://localhost:8762/eureka/,http://localhost:8763/eureka/
+2️⃣ Eureka Server 2 (Port 8762)
+
+application.properties
+
+server.port=8762
+spring.application.name=eureka-server
+
+eureka.client.register-with-eureka=true
+eureka.client.fetch-registry=true
+
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/,http://localhost:8763/eureka/
+3️⃣ Eureka Server 3 (Port 8763)
+
+application.properties
+
+server.port=8763
+spring.application.name=eureka-server
+
+eureka.client.register-with-eureka=true
+eureka.client.fetch-registry=true
+
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/,http://localhost:8762/eureka/
+
+
+
+
+4.Will eurek arservre cause any latency issues
+*
+why Eureka Server is not called for every request and how the client fetches and caches the registry at startup.
+
+Below is the code/configuration you can paste in Notepad.
+
+1️⃣ Client Configuration (Fetch Registry at Startup)
+
+application.properties
+
+spring.application.name=order-service
+server.port=8081
+
+# Fetch registry at startup
+eureka.client.fetch-registry=true
+
+# Register service in Eureka
+eureka.client.register-with-eureka=true
+
+# Eureka server location
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+2️⃣ How Client Fetches Registry
+
+Internally Eureka client does something similar to this:
+
+public class EurekaClientExample {
+
+    public void fetchRegistryAtStartup() {
+
+        // Connect to Eureka Server
+        String eurekaServerUrl = "http://localhost:8761/eureka/apps";
+
+        // Fetch all registered services
+        System.out.println("Fetching registry from Eureka Server...");
+
+        // Registry is stored locally in cache
+        System.out.println("Saving registry in local cache");
+
+    }
+}
+3️⃣ Service Call Flow
+Step 1
+Client Service starts
+(order-service)
+
+        ↓
+
+Step 2
+Fetch registry from Eureka Server
+(GET /eureka/apps)
+
+        ↓
+
+Step 3
+Registry stored in LOCAL CACHE
+
+        ↓
+
+Step 4
+Service calls another service
+directly using cached IP
+
+order-service → product-service
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------Clinet side load balancer in springboot
+*Load balancer helps is distributing the trafiuc across servers
+*Load balancer is of 2 types
+1.Server side load balancers
+*In this we have the centralized load balancer like nginx or the elb
+*here the load balancing logic is on dedicated server
+*clinet calls the load balancer server which forwards the request to other service
+*
+2.Clinet side load balancing
+*Here the thing is that the logic of the load balancing is on the clinet side itself
+*so th process is clinet calls the service 
+*Here
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Lets understand quick
+//remove
+*A Load Balancer distributes incoming requests across multiple instances of a service.
+*If there are 3 instances of Product Service, load balancer decides which instance receives request.
+
+Benefits:
+
+High availability
+
+Fault tolerance
+
+Better performance
+
+No single point failure
+*
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+What is fault tolerant microservice
+*so we have the rate limiter->bulk head than the -?time limiter->circuit breaker than retry
+*

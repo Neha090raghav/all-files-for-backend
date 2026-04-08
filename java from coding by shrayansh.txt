@@ -1,0 +1,169 @@
+Java memory management and garbage collections in depth
+*stack and heap
+*So first of all the thing is that we have many copies of the stack
+*we have one copy of heap
+
+
+Stack
+*in stack we have separe memeory blocks for method and in those memory blocks the local variables are stored
+*It stores primitive data types
+*It stores referneces of the heap objects
+*THirdyly every thread has its own stack memeory
+*so every refrence or variable is within a scops and as soon as the variable goes out of scope it gets deleted from the stack
+*if stack m,emeory is full we get the stackoverflow error
+*public class MemoryManagement {
+
+    public static void main(String args[]) {
+
+        int primitiveVariable1 = 10;
+        Person personObj = new Person();
+        String stringLiteral = "24";
+
+        MemoryManagement memObj = new MemoryManagement();
+        memObj.memoryManagementTest(personObj);
+    }
+
+    private void memoryManagementTest(Person personObj) {
+
+        Person personObj2 = personObj;
+        String stringLiteral2 = "24";
+        String stringLiteral3 = new String("24");
+    }
+}
+
+class Person {
+}
+
+
+-------------------------
+| main()                |
+-------------------------
+| primitiveVariable1 = 10 |
+| personObj  →  0x101     |
+| stringLiteral → 0x201   |
+| memObj → 0x301          |
+-------------------------
+0x101 → Person object
+0x201 → "24"  (String Pool)
+0x301 → MemoryManagement object
+
+
+
+-------------------------
+| memoryManagementTest()|
+-------------------------
+| personObj → 0x101      |
+| personObj2 → 0x101     |
+| stringLiteral2 → 0x201 |
+| stringLiteral3 → 0x401 |
+-------------------------
+
+-------------------------
+| main()                |
+-------------------------
+| primitiveVariable1 = 10 |
+| personObj  →  0x101     |
+| stringLiteral → 0x201   |
+| memObj → 0x301          |
+-------------------------
+
+0x101 → Person object
+0x201 → "24" (String Pool)
+0x301 → MemoryManagement object
+0x401 → new String("24") object
+
+
+🔥 Important Concepts
+✅ 1. Person personObj2 = personObj;
+
+Both variables point to SAME heap object.
+
+personObj  ─┐
+            ├──→ Person (0x101)
+personObj2 ─┘
+
+✅ 2. String stringLiteral2 = "24";
+
+Java checks String Pool.
+
+Since "24" already exists:
+👉 It reuses same reference (0x201)
+
+
+
+Note:wheb this frame is compiled than they are removed from stack now no refrence points to onkevt in heap
+*So to clear those unreferenced objects we have the garbage collectore
+*Grabage collector scans hepas and see if thre are any unrefrenecd object
+*If yes than the dlete it
+*Now when we write System.gc() than only garbagf caollcetor runs
+*But jvm says its of no gurantee that evene If you run the System.gc() garbage collector will work
+
+
+1. Strong Reference (default)
+
+Normal reference in Java.
+
+Person p = new Person()
+As long as person points to object, GC won’t collect it.
+
+Most commonly used.
+
+
+
+
+2.Weak reference:
+WeakReference<Person> weakRef = new WeakReference<>(new Person());
+GC can reclaim object if only weak references exist.
+so System.gc();
+
+System.out.println(weakRef.get()); // may print null if GC collected it
+
+
+✅ Used in caches (e.g., WeakHashMap).
+
+
+
+3.Soft refernce
+GC collects them only if memory is low (not immediately like Weak Reference).
+
+import java.lang.ref.SoftReference;
+
+String str = new String("Hello");
+SoftReference<String> softRef = new SoftReference<>(str);
+
+System.gc();
+
+System.out.println(softRef.get()); // likely still available unless memory is low
+ Used for memory-sensitive caching (images, documents).
+
+
+Heap
+*Heap memeory is divived into 2 parts young generation and old generation
+*and another we have metsapace
+*Young generation is agin divided into 3 parts
+*eden,s0,s1
+*we created 5 objects as the o0,o1,02,03,04
+*they will first be stored at eden
+*then suppose gc runs and see 2,3 are dereferned it marks first then
+*then sweep the lived object to survivor 0
+*and age is applied to the living objects
+*Suppose i set the threshold as 3 
+*if any survivor object reaches the ge 3 than it should be moved to the old generation
+*Note:as the objects i the old generation are time taking
+*Hence object creation and deletion in the old generation is time taking
+*GC in the old generation called the mimor gc and in old generation called the major gc
+*and in metspoace we store class variable or the class metadata or the class constants like final static
+*
+
+ypes of gc
+1.Serial gcc here only one thread does the job of cleans and when thi s thread work all our application will stop and these gcc are slow
+2.Paraallel gcc here we have many threads to do the work and it comes from java 8
+
+
+Gcc follows the 
+1.Mark and sweep algo
+2.Mark sweep with compact
+menas the unrefrence object will be removed the servivor are adjusted to djacent and rest hollow memeory will be hused
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Types of classes
+

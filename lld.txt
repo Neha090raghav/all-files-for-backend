@@ -1,0 +1,1224 @@
+*Solid principles says that the
+*s stands for the single responsibility principle which syas a class can have only one reason to change
+*suppose we have the class as Invoivce which as the entity vas makrker and quantity
+class Invoice {
+
+    private Marker marker;
+    private int quantity;
+
+    public Invoice(Marker marker, int quantity) {
+        this.marker = marker;
+        this.quantity = quantity;
+    }
+
+    public int calculateTotal() {
+        int price = ((marker.price) * this.quantity);
+        return price;
+    }
+
+    public void printInvoice() {
+        // print the Invoice
+    }
+
+    public void saveToDB() {
+        // Save the data into DB
+    }
+}
+*various method here ar calculate price and save todb so this don't follows the single responsibly principle as this has many reason to change as we can have save to file
+*we can have the calculate price according to gst
+*So this class has many reasons to change
+*so now we will assign one responsibility to each class class Invoice {
+
+    private Marker marker;
+    private int quantity;
+
+    public Invoice(Marker marker, int quantity) {
+        this.marker = marker;
+        this.quantity = quantity;
+    }
+
+    public int calculateTotal() {
+        int price = ((marker.price) * this.quantity);
+        return price;
+    }
+}tis class has responsiblilty to calculate the price
+
+class InvoiceDao {
+
+    Invoice invoice;
+
+    public InvoiceDao(Invoice invoice) {
+        this.invoice = invoice;
+    }
+
+    public void saveToDB() {
+        // Save into the DB
+    }
+}
+so here its works is to save the invoices to db
+*Then we have the class InvoicePrinter {
+
+    private Invoice invoice;
+
+    public InvoicePrinter(Invoice invoice) {
+        this.invoice = invoice;
+    }
+
+    public void print() {
+        // print the invoice
+    }
+}
+This is to print the invoices 
+
+
+
+
+
+
+
+
+
+
+
+
+2.Open closed principles
+*It says open for the extension but closed for the modidfication
+*class InvoiceDao {
+
+    Invoice invoice;
+
+    public InvoiceDao(Invoice invoice) {
+        this.invoice = invoice;
+    }
+
+    public void saveToDB() {
+        // Save into the DB
+    }
+}
+*Taking the example of this only
+*If this class is tested and is in live then the 
+*then featire of saving to the file should not be added in same class
+*class InvoiceDao {
+
+    Invoice invoice;
+
+    public InvoiceDao(Invoice invoice) {
+        this.invoice = invoice;
+    }
+
+    public void saveToDB() {
+        // Save Invoice into DB
+    }
+
+    public void saveToFile(String filename) {
+        // Save Invoice in the File with the given name
+    }
+}
+*This is wrong as we are modidfying same class instead
+*interface InvoiceDao {
+
+    public void save(Invoice invoice);
+}
+*class DatabaseInvoiceDao implements InvoiceDao {
+
+    @Override
+    public void save(Invoice invoice) {
+        // Save to DB
+    }
+}
+*class FileInvoiceDao implements InvoiceDao {
+
+    @Override
+    public void save(Invoice invoice) {
+        // Save to file
+    }
+}
+This is correct
+
+
+
+3.Liskosv substitution principle says
+if class b is child of class a then object of class a can be replaced with the objects of class b without breaking the behaviour of programme
+*Note:subclass should extend the capability of the class not norrow the capablilty of parent class
+*interface Bike {
+
+    void turnOnEngine();
+    void accelerate();
+}
+class MotorCycle implements Bike {
+
+    boolean isEngineOn;
+    int speed;
+
+    public void turnOnEngine() {
+        // turn on the engine
+        isEngineOn = true;
+    }
+
+    public void accelerate() {
+        // increase the speed
+        speed = speed + 10;
+    }
+}
+class Bicycle implements Bike {
+
+    public void turnOnEngine() {
+        throw new AssertionError("there is no engine");
+    }
+
+    public void accelerate() {
+        // do something
+    }
+}
+
+
+
+
+4.Interface segmented principles
+*Interface should be such that ,the clinets should not need to implement function not needed
+*interface RestaurantEmployee {
+
+    void washDishes();
+    void serveCustomers();
+    void cookFood();
+}
+*class Waiter implements RestaurantEmployee {
+
+    public void washDishes() {
+        // not my job
+    }
+
+    public void serveCustomers() {
+        // yes and here is my implementation
+        System.out.println("serving the customer");
+    }
+
+    public void cookFood() {
+        // not my job
+    }
+}wrong as clinet need to implement those functions also which are not neded
+*correct this will be interface WaiterInterface {
+
+    void serveCustomers();
+    void takeOrder();
+}
+*class Waiter implements WaiterInterface {
+
+    public void serveCustomers() {
+        System.out.println("serving the customer");
+    }
+
+    public void takeOrder() {
+        System.out.println("taking orders");
+    }
+}
+
+
+
+
+Now 
+5.Dependency inversion principle
+*A class should depnds on the interfaces rather than than the concrete impleneations
+*class MacBook {
+
+    private final WiredKeyboard keyboard;
+    private final WiredMouse mouse;
+
+    public MacBook() {
+        keyboard = new WiredKeyboard();
+        mouse = new WiredMouse();
+    }
+}
+Wrong as here we are having the concrete implementaions
+class MacBook {
+
+    private final Keyboard keyboard;
+    private final Mouse mouse;
+
+    public MacBook(Keyboard keyboard, Mouse mouse) {
+        this.keyboard = keyboard;
+        this.mouse = mouse;
+    }
+}
+here we are priving the interfaces
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Strategy design patterns
+*Design pattrens are the principles for the oop 
+*# Strategy Design Pattern
+
+*suppose we have the interface vehicle and inside it we have method drive as abstract method
+*class offroad vehicle extends the vehicle and implement it for the special capabilities
+*
+
+
+                 +----------------------+
+                 |      Vehicle         |
+                 |   (Base Class)       |
+                 |----------------------|
+                 |  drive()             |
+                 |  -> Normal Capability|
+                 +----------^-----------+
+                            |
+            ---------------------------------
+            |                               |
+            |                               |
++----------------------+        +----------------------+
+|     SportVehicle     |        |   OffRoadVehicle     |
+|       (Child)        |        |        (Child)       |
+|----------------------|        |----------------------|
+| drive()              |        | drive()              |
+| -> Special Capability|        | -> Special Capability|
++----------------------+        +----------------------+
+
+So its as sportvehicle is a vehicle so here is a relationship is ther and arrow full amed is used to denote the is a relationship
+*suppose this special capacility in offroad vehicle and the sportvehicle is same hence the duplicate code is there 
+*so what we will do we will make one interface as Driver interface 
+*insidd that the drive as the abstract method
+*and many class implemnst this drive interface such as spcl drive or normal drive
+*So now public interface Driver {
+    void drive();
+}
+*public class NormalDrive implements Driver {
+
+    @Override
+    public void drive() {
+        System.out.println("Driving with normal mode.");
+    }
+}
+public class SpecialDrive implements Driver {
+
+    @Override
+    public void drive() {
+        System.out.println("Driving with special sports mode.");
+    }
+}
+and put this driver interface in the vehicle class instead of providing the drive functionality there
+*public class Vehicle {
+
+    private Driver driver;
+
+    // Constructor injection
+    public Vehicle(Driver driver) {
+        this.driver = driver;
+    }
+
+    public void performDrive() {
+        driver.drive();
+    }
+}
+so now our ofroad vehicle will decide what drive strategy they wanst to use
+*We should use the strategy pattern when we rae creating the child parent and in any use case 2 child can have the same code
+*
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Observer pattern
+*in Walmart interview this was asked that the 
+*Suppose we goes to the amazon and there we have the search iPhone but its out of stocka dn we clicked notify me when in stock
+*so we want to implements functionality that if the customer has clicked notify me on the product and that product comes in stock than notify all customers
+*                 OBSERVABLE (Subject)
+                 ---------------------
+                       _________
+                      |         |
+                      |         |
+                      |_________|
+                           |
+                           |  State Change
+                           |  S1
+                           |  S2
+                           |  S3
+        -------------------------------------------------
+        |                     |                       |
+        v                     v                       v
+
+     OBSERVER 1           OBSERVER 2              OBSERVER 3
+     -----------          -----------             -----------
+       _________            _________               _________
+      |         |          |         |             |         |
+      |         |          |         |             |         |
+      |_________|          |_________|             |_________|
+*So whenever the state changes of the observable it will notify all the customers
+*so the first thing in the observable interface is the list<observerInterface>
+*and then add() method to register the observable interface object
+*remove() method to remove particular observable object
+*Then we have notify()
+                 OBSERVABLE INTERFACE
+                 --------------------
+
+        +----------------------------------+
+        |        ObservableInterface       |
+        |----------------------------------|
+        | + add(Observer obj)              |
+        | + remove(Observer obj)           |
+        | + notify()                       |
+        | + setData()
+        list<observer>
+        +----------------------------------+
+                         |
+                         |   (0..*)
+                         |
+                         v
+                 OBSERVER INTERFACE
+                 ------------------
+
+        +----------------------------------+
+        |        ObserverInterface         |
+        |----------------------------------|
+        | + update()                       |
+        +----------------------------------+
+
+
+*Now we will provide the concrete implementation of the observable interface 
+                    +-------------------------+
+                    |     Observer (Interface)|
+                    |-------------------------|
+                    | + update()              |
+                    +-------------------------+
+
+
+                    +----------------------------------+
+                    |   Observable (Interface)         |
+                    |----------------------------------|
+                    | + add(Observer o)                |
+                    | + remove(Observer o)             |
+                    | + notifyObservers()              |
+                    +----------------------------------+
+
+
+                    +----------------------------------------------+
+                    |        ConcreteObservable                     |
+                    |----------------------------------------------|
+                    | - List<Observer> observers                   |
+                    |----------------------------------------------|
+                    | + add(Observer o)                            |
+                    |     observers.add(o);                        |
+                    |                                              |
+                    | + remove(Observer o)                         |
+                    |     observers.remove(o);                     |
+                    |                                              |
+                    | + notifyObservers()                          |
+                    |     for (Observer o : observers) {           |
+                    |         o.update();                           |
+                    |     }                                         |
+                    +----------------------------------------------+
+
+*Note the thing is that the this notifyobservers methods should be called when soe sttaus change has take place
+*so in setdata(data){
+sttaus=data;
+notify()
+}
+
+*Now question is that now our update method in the observer interface implemenst wanst which data is updated so its wanst the observable interface objects 
+*                 +----------------------------+
+                 |        Observer            |
+                 |        (Interface)         |
+                 |----------------------------|
+                 | + update()                 |
+                 +-------------^--------------+
+                               |
+                               | implements
+                               |
+                 +--------------------------------+
+                 |   ObserverConcreteClass        |
+                 |--------------------------------|
+                 | - Observable observable        |
+                 |--------------------------------|
+                 | + update()                     |
+                 |   {                            |
+                 |       // business logic        |
+                 |       // react to change 
+                      observable .getdata()      |
+                 |   }                            |
+                 +--------------------------------+
+*Note:so instead of passing the observable interface in update method we create dhas a relationship of the observer implementations with the observer interface implemnetstaions
+*classic implemntaio is waetger stations as one of observable interface
+*we hav eth observer as the the mobile display observer and the tv display observer and we have one interface as the display intervae with abstract method as update and  mobile display observer and the tv display observer will implemnst
+*
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Decorator
+                 +---------------------------+
+                 |        F1 + F2 + ... Fn  |
+                 |   (Final Decorated Object)|
+                 +---------------------------+
+                              |
+                 +---------------------------+
+                 |        F1 + F2 + F3       |
+                 +---------------------------+
+                              |
+                 +---------------------------+
+                 |           F1 + F2         |
+                 +---------------------------+this has f1 and f1+f2 is also the core object
+                              |
+                 +---------------------------+
+                 |             F1            |
+                 |        (Core Object)      |
+                 +---------------------------+
+*so why this decoaror pattern is used its used to decrease the class explosion
+*So what happens is that the we have base object thare can be many decoarin like chese,mushroom and with that there are many permuation that can be built
+*                        <<abstract>>
+                        BasePizza
+                    ------------------
+                    + cost() : double
+                    ------------------
+                           ^
+                           |
+                    (is-a) |
+                           |
+            --------------------------------
+            |                              |
+        Margherita                    Farmhouse
+        (Concrete)                    (Concrete)
+
+
+                        <<abstract>>
+                      ToppingDecorator
+                    ---------------------
+                    - BasePizza pizza   <-- has-a
+                    + cost() : double along with its its also a basipiiza 
+                    ---------------------
+                           ^
+                           |
+                    (is-a) |
+                           |
+            --------------------------------
+            |                              |
+        ExtraCheese                   Mushroom
+        (Decorator)                   (Decorator)
+
+so in calss extrachesse that implemnst the toppingdecoartion has Bsepizza and the cost method in which cost(){
+b.cost+10
+}
+
+
+Now the code is public abstract class BasePizza {
+    public abstract int cost();
+}
+*public class Margherita extends BasePizza {
+
+    @Override
+    public int cost() {
+        return 100;
+    }
+}
+*public class Farmhouse extends BasePizza {
+
+    @Override
+    public int cost() {
+        return 200;
+    }
+}
+*public abstract class ToppingDecorator extends BasePizza {
+    protected BasePizza basePizza;
+
+    public ToppingDecorator(BasePizza basePizza) {
+        this.basePizza = basePizza;
+    }
+}
+*public class ExtraCheese extends ToppingDecorator {
+
+    public ExtraCheese(BasePizza basePizza) {
+        super(basePizza);
+    }
+
+    @Override
+    public int cost() {
+        return this.basePizza.cost() + 20;
+    }
+}
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Factory patterns vs the abstract factory pattern
+*factory pattern is used when we want to create the object based on some conditons
+*and in there are many classes where on some condition that particykar object i screated so we will write that code everywhere
+*henece its a duplicacay
+*               FACTORY PATTERN
+
++-----------+ has-a +------------------+
+| Main | -----------------------> | ShapeFactory |
+| | |------------------|
+| | | + getShape(type) |
++-----------+ +------------------+
+|
+| has-a
+v
++------------------+
+| <<interface>> |
+| Shape |
+|------------------|
+| + draw() |
++------------------+
+^ ^
+| |
+| implements |
+---------------- ----------------
+| |
++----------------+ +----------------+
+| Circle | | Square |
+|----------------| |----------------|
+| + draw() | | + draw() |
++----------------+ +----------------+
+
+Here now the thing is that the we will creat the interface shape and circle and rectangle implements it
+*Now the thing is that the we will create one class shape factory inside that the method public Shape getshape(int i)
+{
+cas 1:
+return new Circle()
+}
+and in main we will use that by
+*ShapeFactory s=new ShapeFactory()
+Cicle c=s.getshape(2)
+c.draw()
+
+*Note:Here shapefactory is the source of truth
+*Now tha bstarct factory pattern comes when we have the many factory and in each factory we want to return the group obects
+*
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Parking lot 
+Vehicle (Ticket)
+|
+v
++-----------+
+| Entry |
+| Gate |
++-----------+
+|
+v
++----------------+
+| Parking Lot |
+| (Find Slot) |
++----------------+
+|
+v
++-----------+
+| Exit |
+| Gate |
+| (Payment) |
++-----------+
+|
+v
+Vehicle Out
+
+
+
+Objects taht we can see
+1.entrance->check parkaing space,update parking psace and generate tickets
+2.exit
+3.vehicle->vehicle no,vehicle type(enums->2 wheeler or 3 wheeler)
+4.parking lot
+5.Ticket->entry time ,parking space
+
+
+
+*Now the thing is that the we have requiremenst ki taht can eb asked from the interviewr that the 
+1.1 entrance and one gate?
+2.what are diffrenet kind of parking spots for diffrenet vehivles like fir 2 wheller and 3 wheerler
+3.Paymenet made on which basis the minute or hourly
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+from interview with bunny
+Book my show app
+
+Funtional requirements(steps to book a ticket)
+
+*first we need some search keywords like locations or the date to find the tcickets(searching the events based on keywords)
+*once he finds ki on this location these are the movies or events then he must also get all the metadata of the event/movie(viewing the event)
+*Book the ticket
+
+
+Non functional requirements
+*ask the interviewer that for how many users you rae designing this applications than he says 100 million user dau so scale=100 million dau
+*Next as we know system cant be consistent and available at same time according to cap thorem but it will be required both means first it needs to be consistent as in the when 2 user book ticket for the same event at same time then they cant book the same seat and available meassappliction should be up
+But both cant be possible so we need to ask the that for searching events based on location systame can be highly available but for the ticket booking it can be consistent
+*
+
+
+4core entities here are
+1.User
+2.Event/movie
+3.Hall
+4.Ticket
+
+
+The diffrenet apis will be 
+1.GET /v1/search?searchTerm=&location=&date=List<events>
+
+2.GET /v1/event/{eventId}->event details ,Loccation seats[]
+
+3.POST /v1/bookings/reserve//in headrsr we pass the user -id
+{
+List<seats>//the seats he wants to book
+}
+and then this will give you booking id now we will make payment
+.POST /v1/bookings/confirm
+{
+booking id,
+payment details
+}
+
+
+
+Hld
+*so as we can see we have 100 dau menas we will use the microservice architecture 
+*we will use the api gateway for the authentication,authorization,rate limiting and routing the request to correct microservice
+*                    +---------------------+
+                    |       Clients       |
+                    +---------------------+
+                             |
+                             v
+                    +---------------------+
+                    |     API Gateway     |
+                    |  - auth             |
+                    |  - rate limiting    |
+                    |  - routing          |
+                    +---------------------+
+                             |
+        -----------------------------------------------
+        |                         |                   |
+        v                         v                   v
++---------------+        +----------------+    +---------------+
+|    Search     |        |  Event Service |    |    Booking    |
+|   Service     |        |                |    |    Service    |
++---------------+        +----------------+    +---------------+
+                                |
+                                v
+                         +---------------+
+                         |   Database    |
+                         +---------------+
+
+*now lets understabd the database
+*first we need lots of events based on search mena slots of data
+*2nd after picking one event we need to book but that must be consistent so always go for the MySQL or postgrres for the booking service
+*Now for all the evnst we can go for the availability things means the Cassandra db which is NoSQL
+*Now the queation arises is that the now search service need to do many search from Cassandra but Cassandra is write optimized not read so we will hgo with elastic search
+*search service will use the elastic search but how the data from Cassandra db will go to elastic search than we need to write some cron or ingeston job
+*                              +---------------------+
+                              |       Clients       |
+                              +---------------------+
+                                        |
+                                        v
+                              +---------------------+
+                              |     API Gateway     |
+                              |  - auth             |
+                              |  - rate limiting    |
+                              |  - routing          |
+                              +---------------------+
+                                        |
+         ----------------------------------------------------------------
+         |                          |                                 |
+         v                          v                                 v
++----------------+        +--------------------+              +----------------+
+|    Search      |        |    Event Service   |              |    Booking     |
+|    Service     |        +--------------------+              |    Service     |
++----------------+                 |                         +----------------+
+        |                          |                                  |
+        v                          v                                  v
++----------------+        +--------------------+              +----------------+
+| ElasticSearch  |        |      Cassandra     |              | MySQL /        |
+| (for search)   |        | (Event data store) |              | Postgres       |
++----------------+        +--------------------+              +----------------+
+
+CDC (Change Data Capture) Flow:
+--------------------------------
+Cassandra  --->  ElasticSearch
+
+Event Object Structure:
+-----------------------
+Event {
+  id
+  title
+  price
+  location
+  description
+  seats[]
+}
+*Note:so here thing is that the whenever the user searches for the movie bthan he goes to elastic search and cdc thats the number of seat or real time data that can be chnges will be sent to elastic search
+*now we want once the user make the final booking then in the evnts db the seats [] must be decreased but that is alos optimized as now the Casandra db is write optimized
+*+-------------+        +-----------+        +-----------+        +---------------+
+|  Cassandra  | -----> |  Kafka    | -----> | Consumer  | -----> | ElasticSearch|
+|  (Source DB)|        |  (Broker) |        |           |        |   (Search)   |
++-------------+        +-----------+        +-----------+        +---------------+
+        |                    ^
+        |                    |
+        |               Kafka Connect
+        |
+    Debezium
+  (CDC Connector)
+This is sytem for the higly avaible search
+
+
+
+Long approach
+*Now the for the consistsnet syatem we have the Supose request comes from user 2 to book seat l1,l2 fist booking service will check Cassandra db if setas are mepty or not
+*if empty sset the status of seats as reserve
+*then boking service calls the payment service for the payment 
+*if payment succeeds than the update the sttaus to booked 
+*suppose the payment fails but that seat status is reserve so we can implement cron job in event service on the event status if any events is reserve for the more than 10 minutes than make it free
+*
+
+But this is not real time 
+*Next thing we can do is that the now 
+1.we can introduce redis cluster
+*so suppose l1.l2 is not present in cluster
+*then introduce it and set the ttl as 10 min
+*then go for payment
+*if succeds than the update the sttaus to booked in evnest service
+*if fails than after 10 min this entry will be removed
+*No need to implement the cron job
+                              +------------------+
+                              |      Clients     |
+                              |  user1, user2    |
+                              +------------------+
+                                       |
+                                       v
+                              +------------------+
+                              |    API Gateway   |
+                              | - auth           |
+                              | - rate limiting  |
+                              | - routing        |
+                              +------------------+
+                                       |
+        -----------------------------------------------------------------
+        |                         |                                   |
+        v                         v                                   v
++---------------+        +------------------+                 +---------------+
+|    Search     |        |   Event Service  |                 |    Booking    |
+|   Service     |        +------------------+                 |    Service    |
++---------------+                 |                           +---------------+
+        |                         |                                   |
+        v                         v                                   v
++----------------+        +------------------+                +----------------+
+| ElasticSearch  |        |    Cassandra     |                | MySQL/Postgres |
+| (for search)   |        | (Event storage)  |                | (Bookings DB)  |
++----------------+        +------------------+                +----------------+
+                                                                  |
+                                                                  v
+                                                           +--------------+
+                                                           |    Redis     |
+                                                           | (Seat Lock)  |
+                                                           +--------------+
+                                                                  |
+                                                                  v
+                                                           +----------------+
+                                                           | Payment Gateway|
+                                                           +----------------+
+
+---------------------------------------------------------------------------
+CDC (Change Data Capture) Flow
+---------------------------------------------------------------------------
+Cassandra  --->  Kafka  --->  Consumer  --->  ElasticSearch
+
+---------------------------------------------------------------------------
+Example Search Flow:
+---------------------------------------------------------------------------
+User searches "SpiderMan L12,L13"
+Search Service queries ElasticSearch
+ElasticSearch returns matching events
+
+---------------------------------------------------------------------------
+Example Booking Flow:
+---------------------------------------------------------------------------
+User selects seats
+Booking Service:
+  -> Locks seats in Redis
+  -> Stores booking in MySQL/Postgres
+  -> Calls Payment Gateway
+  -> Confirms booking
+
+Folow up questions
+*Follow up questions is that if we have the huge traffic for instead of directly hitting the boking microservice we can have the kafka i which queue is there 
+*
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Hotel boking application
+*so functional requieremnst re same
+*Non functional requirements are also same
+*Now the core entities are
+1.User
+2.Room
+3.Hotel
+4.Booking Ticket
+
+Now lwts understand the high level design
+*                         ===================================
+                               HOTEL BOOKING SYSTEM
+                         ===================================
+
+
+CLIENTS
+-------
+ [Web]      [Mobile]      [Admin]
+     \          |           /
+      \         |          /
+            +----------------------+
+            |   LB + API Gateway   |
+            +----------------------+
+                    |
+                    |-- Authentication
+                    |-- Authorization
+                    |-- Rate Limiting
+                    |-- Routing
+                    v
+   ----------------------------------------------------------------
+   |               |                   |                         |
++---------+   +-----------+      +------------+            +-----------+
+| UserSvc |   | SearchSvc |      | BookingSvc |            | ReviewSvc |
++---------+   +-----------+      +------------+            +-----------+
+     |              |                  |                         |
+     v              v                  v                         v
+  +--------+    +-------------+     +------------+           +----------+
+  | UserDB |    |  HotelDB    |     | BookingDB  |           | ReviewDB |
+  +--------+    | (Postgres)  |     +------------+           +----------+
+                +-------------+
+                       |
+                       |
+                +----------------+
+                | Availability   |
+                +----------------+
+
+Booking Flow
+------------
+BookingSvc
+     |
+     |----> Payment Gateway
+     |
+     v
+BookingDB
+     |
+     v
+ReviewSvc --> ReviewDB
+
+
+
+=================================================================
+                      DATABASE STRUCTURE
+=================================================================
+
+------------------------
+1. USER TABLE
+------------------------
+User
+-----
+- userId (PK)
+- name
+- email
+- password
+- createdAt
+
+
+------------------------
+2. HOTEL TABLE
+------------------------
+Hotel
+------
+- hotelId (PK)
+- name
+- address
+- geoLocation (latitude, longitude)
+
+
+------------------------
+3. ROOM TABLE
+------------------------
+Room
+-----
+- roomId (PK)
+- hotelId (FK)
+- roomType
+- capacity
+- metadata
+
+
+------------------------
+4. PRICE TABLE
+------------------------
+Price
+------
+- priceId (PK)
+- hotelId (FK)
+- roomId (FK)
+- price
+- startDate
+- endDate
+- currency
+
+
+------------------------
+5. AVAILABILITY TABLE (Daily)
+------------------------
+Availability
+--------------
+- availabilityId (PK)
+- hotelId (FK)
+- roomId (FK)
+- date
+- status (AVAILABLE, BOOKED, MAINTENANCE)
+
+
+------------------------
+6. AVAILABILITY TABLE (Date Range)
+------------------------
+AvailabilityRange
+------------------
+- availabilityId (PK)
+- hotelId (FK)
+- roomId (FK)
+- startDate
+- endDate
+- status (AVAILABLE, BOOKED, MAINTENANCE)
+
+
+------------------------
+7. BOOKING TABLE
+------------------------
+Booking
+--------
+- bookingId (PK)
+- userId (FK)
+- hotelId (FK)
+- roomId (FK)
+- checkInDate
+- checkOutDate
+- status (BOOKED, CANCELLED)
+- paymentStatus
+- createdAt
+
+
+------------------------
+8. REVIEW TABLE
+------------------------
+Review
+-------
+- reviewId (PK)
+- userId (FK)
+- hotelId (FK)
+- rating
+- comment
+- createdAt
+
+
+
+=================================================================
+                    RELATIONSHIP OVERVIEW
+=================================================================
+
+User (1) -------- (M) Booking
+
+Hotel (1) ------- (M) Room
+Hotel (1) ------- (M) Price
+Hotel (1) ------- (M) Availability
+Hotel (1) ------- (M) Booking
+Hotel (1) ------- (M) Review
+
+Room (1) -------- (M) Price
+Room (1) -------- (M) Availability
+Room (1) -------- (M) Booking
+
+
+Note:first availablilbilty table is on the basis of the daily but data can be large
+*Second on the bais of range date
+Note:all the images of hotels will be saved in the blob or the s3 bucket
+
+Now for the search here we have the
+*so along with this we have thesearch by hotels
+*Second is the search by the locations and date
+ 
+so we have the test search that only elastic search can do 
+So we have the proximity search means within this location we will give the hotels
+*Now best ways to implement proximity search is 
+1.Elastic search
+2.Quad tree 
+3.Postgres db with gis extension its jusyt the indexing on the geolocation attribute to get the result faster
+4.Geohash
+
+Since the hotels by location are constants and the quadree and postgres db requires the inmemory cacje to store all hotels based on location we will use the elastic search for the search by textual data and the proximitysearch
+*
+
+Next is consistencty since after booking we wnned to upfate the booking db and the hotel db
+*tehn if fails mena s inconsistency to solve this problem we must use the kafka 
+Same as in ticket booking applications
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Food delivery applications
+*Here we have the 3 intermediator first is the user than hotel ownere and then delivery partner
+*Functional Requirements
+
+User should be able to register into our application
+
+List down all the nearby restaurants based on user location
+
+User should able to search restaurants based on title and name
+
+User shall be able to add any of the restaurant items
+
+User should able to select restaurants, add items to the cart and make the payment to confirm the order
+
+Once the restaurant accept, find nearby delivery partner based on user location, optimized delivery time
+
+Once the delivery partner picks up the order, give almost real time location of delivery partner to user
+
+User should get notification at all stages and get past orders in the profile
+
+Non-Functional Requirements
+
+Scale: 5M users and 1M restaurants
+
+CAP Theorem: Application should be highly available based on searching. And our application should be highly consistent based on payments and order of food from restaurant
+
+
+Core entities
+*User
+*restaurants
+*fOOD
+*bookings
+*dELIEVERY AGENT/PARTNER
+3. API Designing
+
+POST /v1/users/register {postBody: userMetaData} – (login/logout/update)
+
+GET /v1/restaurants/nearby?lat={lat}&long={long}&count={n} – ListRestaurantId (Pagination)
+
+GET /v1/restaurants/search?title={title}&name={name} – ListRestaurantId (Pagination)
+
+GET /v1/restaurants/{restId} – Restaurant Metadata
+
+GET /v1/restaurants/{restId} -> list of foodItems available
+
+POST /v1/cart/items {postBody: itemId + qty} – returns cart (update/delete)
+
+POST /v1/orders {postBody: orderId} – return orderId
+
+POST /v1/payment {postBody: paymentMetaData + orderId} – returns paymentId
+get  /v1/{ordered}/tarcking to get the tracing of the orders
+
+
+Now its again till the paymenet rest calls are not public apis thats the Zomato internal apis
+*                          ======================================
+                           FOOD DELIVERY SYSTEM (HLD)
+                          ======================================
+
+
+Users
+-----
+ [Web]   [Mobile]
+     \       /
+      \     /
+      +---------------------+
+      |   LB + API Gateway  |
+      +---------------------+
+      | - Authentication    |
+      | - Authorization     |
+      | - Rate Limiting     |
+      | - Routing           |
+      | - Load Balancing    |
+      +---------------------+
+                |
+                |
+  ------------------------------------------------------------------
+  |            |             |            |            |            |
++---------+ +---------+ +---------+ +----------+ +-----------+ +-------------+
+| UserSvc | |SearchSvc| | CartSvc | | OrderSvc | | Payment   | | Delivery    |
++---------+ +---------+ +---------+ +----------+ |  Gateway  | | TrackingSvc |
+     |           |           |           |        +-----------+ +-------------+
+     v           v           v           v              |              |
+  +-------+   +--------+   +--------+  +--------+       |              v
+  |UserDB |   |RestDB  |   |CartDB  |  |OrderDB |       |          +---------+
+  +-------+   +--------+   +--------+  +--------+       |          |DriverDB |
+                                                       |          +---------+
+                                                       |
+                                                       v
+                                                   +--------+
+                                                   |PaymentDB|
+                                                   +--------+
+
+
+Restaurant Side
+---------------
+                +---------+
+                | RestSvc |
+                +---------+
+                     |
+                     v
+                  Restaurants
+
+
+Delivery Flow
+-------------
+OrderSvc
+    |
+    v
+Delivery Tracking Svc
+    |
+    v
+Location Update Svc
+    |
+    v
+Drivers
+    |
+    v
+LB + Gateway
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Distributed job scheduler
+*1. Functional Requirements
+
+User can create/schedule a job (immediate/future/cron)
+
+Monitor the status of job (real time)
+
+Support update/cancel scheduled jobs
+
+Out of Scope: dependence in job (DAG)
+
+2.Non Functional Requirements
+
+Scale: 1M jobs/sec
+
+CAP Theorem: Availability > Consistency
+
+Job should run at least once
+
+Latency: The system should execute the jobs within 2s of their scheduled time

@@ -1,0 +1,55 @@
+Event driven architecture
+*So here services do not call each other directly
+*Instead one service emit event and other service react to that event
+*Event is something that happned in past
+*and that cant be changed
+*and that its has all info about it like order created is an event
+*                REST Distributed Microservices Flow
+
+ User        OrderService      PaymentService     InventoryService     NotificationService
+  |               |                  |                   |                     |
+  |---Place Order--->|               |                   |                     |
+  |               |---Check Real-time Inventory--------->|                     |
+  |               |                  |                   |                     |
+  |               |----Process Payment------------------>|                     |
+  |               |                  |                   |                     |
+  |               |----Reserve Inventory------------------------------->|      |
+  |               |                  |                   |                     |
+  |               |----Send Notification-------------------------------------->|
+  |               |                  |                   |                     |
+  |<---Order Placed---|              |                   |                     |
+  |               | 
+
+
+*Here there are lot of disadvantages here 
+*Problems with the synchronous communications is 
+1.Here first of all to complete the place order flow all the services must be available
+*even if one service down than also flow cant be completed
+
+2.Total letnecy is the sum of the latency of all the microservices
+3.Cascading failure is actually if one service is slow it will cascade or flow to other microservices
+4.Then there is very tight coupling
+5.We can scale only one microservice on the basis of load
+
+
+Lets underatnd now the eda
+*suppose the user place order than there is the check rela time inventory and response send to order service it will save oder with sttaus as pending and publish and event that orderCreated
+*now the the router push that event order created to all services and the payment services and the reservation server and process paymenet and process reservation
+*Now the payment service publish the event payment success and the reservation service s as the reservation success
+*now the router push payment success event the notification service consume and send email and the order status changes too completed
+*
+
+
+Key compoennets of the event driven architecture are 
+1.Prducer is the service which publish the event
+2.Router who push the events
+3.Consumer who consumes the event or service who react to the event
+
+
+
+Now lets see how messages are pushed
+*So basically what happens is that the here the router pushes all the messages immesiatley to the consumer due to which consumer gets overwhelmed with the messages
+*This is push model
+
+wheras in the pull based approach
+*Here the 

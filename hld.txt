@@ -1,0 +1,137 @@
+High Level design
+*So we will understand the application layer and the transport layer
+*so application divided into the clinet server protocols and the peer 2 peer protocols
+*this clinet server protocols has the http ,ftp,smtp,and the websockets
+*now this peer 2 peer protocls has the the webrtc
+*in http,ftp,smtp we have clinet and server clinet sends request and server sends reponse so its one way communication
+*But in the websockets we have clinet we have server we can have 2 way communication as the clinet sends request server sends the response and the sever can also send request and can get response
+*Note:But 2 clinets cant talk
+*Note:used in the messages
+*what happens in the peer 2 peer is that the all can talk client can talk to cikent client to server and server to server an dall
+*Next comes the transport layer we have 2 parts tcp/ip and udp/ip
+*                TCP / IP
+               -----------
+
+   Sender                                Receiver
+
+   data                                  data
+   1  [ ]                                [ ]  2
+   2  [ ]                                [ ]  3
+   3  [ ]                                [ ]
+
+
+        |--------------------------------------|
+        |              [ 00 ]                  |
+        |--------------------------------------|
+        |              ACK 1                   |
+        |--------------------------------------|
+        |              ACK 2                   |
+        |--------------------------------------|
+
+              <----------- ACK -----------
+*hERE virtual connection is made than th edata packets are given the numbering and then the sne dfrom receiver the ack is taken then the if ack not received then data packets sent again
+*So in the tcp ip the order are maintained
+
+*Now in the udp ip here the there is no one virtual connection and the data gram as send without indexin hence no order are maintained here 
+*no acknowledgment send hence here its fast as no ordering
+*Note:udp ip is used when we rae doing the livestreaming
+*Note:the webrtc uses the udp for the livestreaming
+*
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Cap thorem
+*cap theorem is the desirable property of the of the distributed system with the replicable data
+*so our one db node is in the usa ans one in the india 
+*and these dbs are replicated data what stores in one db is stored in db node 2
+*One important pint about them is that these 3 all can be used at once
+*so c menas consisteny we have one application 2 microservices or db nodes with their dbs
+*and then the db are replicated so consistence menas suppose application wriyes a=5 in db node 1
+*then same replicated in db node as a=5 in node 2
+*then when we acces from db node 2 than it should be 5
+*available means db node 1 and 2 must be avaialbale for the all requests
+*p menas partial tolerance which menas even if the 2 db nodes are not able to communicate then also if application quereies result must be there 
+*--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Microservices and its design pattern
+*monoliths also vcalled legacy system
+*diadvantages comes first of all too much code all feature in one application means in gbs data and ide will be overloaded
+*if we neec to fix one bug then also we need the whole deployments menas time taking and along with it the scaling is hard
+*Now the thing is that the in microservice we don't have all the features
+*we have the diffrente microservices and due to which ide is not overloaded
+*deploymet for particular microservice needed
+*if much traffic comes to one microservices than the we need to scale menas more add more instance of that microservices only
+
+*Diadvantages is that if these microservice architecture is not followed correctly than it can cause the latency issue as if the microservices are tightly coupled and calling each microservice on diffrente ports can increase the latency which was less in the monolithic
+*Diadvantage that is amother suppose we made ssome changes to the service 3 and live and if service 2 is using it and might be response before live is diffrenet after thatlive  its diffrenet then service 2 breaks ,Hence debugging here is difficult ki if one changed one microservice than what else we need to monitor that syatem does not fail
+*next disadvantage is Now the thing is that the suppose the one request that make change sin 2 microservices db means this transacton is not consistent what suuposse the transcation part1 is success and rest fails
+*or vice versa what we will do rollback or what so here transaction managennet is bit difficult
+*=================================================================
+                    SYSTEM DESIGN OVERVIEW
+=================================================================
+
+1) DECOMPOSITION
+-----------------
+• Decompose by Business Capability
+• Decompose by Subdomain
+
+
+2) DATABASE
+------------
+• Database per Service
+• Master - Shared (if required)
+
+
+3) COMMUNICATION
+-----------------
+• API
+• Events (E)
+
+
+4) INTEGRATION
+-----------------
+• API GATEWAY
+
+
+=================================================================
+                    ARCHITECTURE FLOW
+=================================================================
+
+             +----------------------+
+             |      MONOLITH        |
+             +----------------------+
+                        |
+                        v
+
+   +--------+     +--------+     +--------+
+   | Service|     | Service|     | Service|
+   |   S1   |     |   S2   |     |   S3   |
+   +--------+     +--------+     +--------+
+       |              |              |
+     [DB]           [DB]           [DB]
+
+
+=================================================================
+                 WITH API GATEWAY INTEGRATION
+=================================================================
+
+                    Client / UI
+                        |
+                        v
+                +----------------+
+                |  API GATEWAY   |
+                +----------------+
+                  |     |     |
+                  v     v     v
+                +----+ +----+ +----+
+                | S1 | | S2 | | S3 |
+                +----+ +----+ +----+
+                  |       |      |
+                [DB]    [DB]   [DB]
+
+=================================================================
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Microservice design pattern 2
+*Strangler design pattern we uses when we are refactoring to microservices from the monolithic 
+*
+*
