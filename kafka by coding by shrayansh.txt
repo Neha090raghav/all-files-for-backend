@@ -46,10 +46,59 @@ Key compoennets of the event driven architecture are
 3.Consumer who consumes the event or service who react to the event
 
 
+Eda models
+:
+1.Pub/sub
+*Events are published to active consumers and then they are forgotten
+*Suppose new consumers comes it will not get the yesterday messages
+Mostly used when we care about the delivery 
+not the past history
 
-Now lets see how messages are pushed
-*So basically what happens is that the here the router pushes all the messages immesiatley to the consumer due to which consumer gets overwhelmed with the messages
-*This is push model
 
-wheras in the pull based approach
-*Here the 
+2.SWtreaming
+Events are appended in logs forever and can be retained
+If new consumer comes than it can baiscally read from latest offset or from day 1 if retention is allowed
+example:kafka
+
+Challenges of the eda:
+1.Eventual consistency
+*As events are processed in async manners
+therefor you can get the stale data means if get calls you are making ,but eventuallly with the time and subsequent calls you can get the updated information
+
+2.Ordering problems 
+Basically what can happens we publihsed one event e1 and than another event e2
+the consumer can get them in reverse so ordering problem can be tyhere
+
+3.If schema of event break then consumer will crash
+
+
+Use Case of even driven architecture
+1.1 event and many consumers like the one action might triggre many actions
+like order place
+then inventory
+payment chargees
+email subsequent
+
+2.Long running business flow
+3.
+--------------------------------------------------------------------------------------------------------------------------
+
+kafka
+So basically kafka is the distributed event streaming platoform that allow us to 
+1.Publish event
+2.Store event
+2.Subscribe or consume the event
+
+
+1.Producer
+This is an application that produces the event to kafka
+Producer->kafka
+This does not care who will consume the event
+
+2.Topic
+Consider topic as folder for whom that event is published or we can see it is the logic storing group of events
+
+Producer 1 publish event 1 for order-event topic
+
+
+

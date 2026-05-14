@@ -165,5 +165,97 @@ Gcc follows the
 2.Mark sweep with compact
 menas the unrefrence object will be removed the servivor are adjusted to djacent and rest hollow memeory will be hused
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-Types of classes
+Lets understand the threads
+Video:30Thread Creation and Lifecycle
+As we know that we can basically create the thread in 2 ways:
+1.By extending Thread class
+2.By implementing the runnable interface
+So basically what happens is that the we have the 
+@functionalinterface
+interface Runnable{
+    abstract void run();
+}
+Now Thread implements Runnable{
+    run
+    init method
+    stop
+    interrupt
+
+}
+so this therad class is the main class that takes cares of whole lifecycle of thread
+
+Lets see both ways of creating Thread
+
+1.By implementing Runnable interface
+public class Myclass implements Runnable{
+    @Override
+    public void run() {
+        System.out.println("running thread is"+Thread.currentThread().getName());
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
+        // to see how IntelliJ IDEA suggests fixing it.
+     Thread t1=new Thread(new Myclass());
+     t1.start();
+    }
+}
+so basically noe new Thread() constrcutor is basically creating the thread
+and when we do t1.start() internally its calling the run method
+Example:
+Lets understand the thread example 
+//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
+// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("enterred the thread"+Thread.currentThread().getName());        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
+        // to see how IntelliJ IDEA suggests fixing it.
+     Thread t1=new Thread(new Myclass());
+     t1.start();
+        System.out.println("released the thread"+Thread.currentThread().getName());
+    }
+}
+public class Myclass implements Runnable{
+    @Override
+    public void run() {
+        System.out.println("new thraed created is "+Thread.currentThread().getName());
+    }
+}
+
+So here the output basically is enterred the threadmain
+released the threadmain
+new thraed created is Thread-0
+Note:so in companies we used this way as here the class we are having that are implementing are not catual thread class so thsese class can also implemnst ther class too 
+
+2.Extends Thread
+now teh classs that ectends the thread class also becomes thread class and has all the methods of the parent class
+Note:So now that class cant extend any other class
+public class Myclass extends Thread{
+    @Override
+    public void run() {
+        System.out.println("new thraed created is "+Thread.currentThread().getName());
+    }
+}
+
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("enterred the thread"+Thread.currentThread().getName());        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
+        // to see how IntelliJ IDEA suggests fixing it.
+        Myclass t1=new Myclass();
+     t1.start();
+        System.out.println("released the thread"+Thread.currentThread().getName());
+    }
+}
+So now the thing is that the here if we dont override the run than default run willl be called from start which does nothing
+Important Question:Why there are 2 ways of creating thread
+Because a class can implement many interface but can extend one class only
+
+
+Thraed lifecycle
+
+
+
 
