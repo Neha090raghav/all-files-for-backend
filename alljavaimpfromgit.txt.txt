@@ -11002,17 +11002,48 @@ public class UserController {
 }
 
 Note:bu here we are hardcoding so to amke it dynamic
-and in suercontroller add 
+2.lets follow the steps:
+use @primary
+@Component
+@Primary
+public class OnlineOrder implements Order {
+}
+
+
+
+3.Dynamic Bean Creation Using Config Class
+Remove @componenet from 
+public class OnlineOrder implements Order {
+}
+and public class OfflineOrder implements Order {
+}
+
+in application.properties
+order.type=online
+Create
+ @Configuration
+public class OrderConfig {
+
+    @Value("${order.type}")
+    private String orderType;
+
+    @Bean
+    public Order orderBean() {
+
+        if ("online".equalsIgnoreCase(orderType)) {
+            return new OnlineOrder();
+        }
+
+        return new OfflineOrder();
+    }
+}
+so aplication starts then reads appplication.proeties and then reads the configuration class and return the child objects
 @RestController
 @RequestMapping("/api/orders")
 public class UserController {
-@Qualifier("offlineorderobject")
-    @Autowired
-    Order offlineOrder;
 
-@Qualifier("offlineorderobject")
     @Autowired
-    Order Onlineorder;
+    private Order order;
 
     @GetMapping("/create")
     public String createOrder() {
@@ -11020,11 +11051,6 @@ public class UserController {
         return "Order created!";
     }
 }
-Note:@value propert takes the value from app.property
-
-
-2.dynamic remove component from order,order online and order offline and create one config file add bean which take value from app .propertw nd return new object of the online order or offline
-
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Condidtional properties annotation
 *when we start application beans is created automatically

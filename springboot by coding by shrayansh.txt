@@ -1038,6 +1038,357 @@ class B {
 Logs / Error
 Error creating bean with name 'a': Requested bean is currently in creation: Is there an unresolvable circular re
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Lecture no :
+spring boot jpa part 1:
+jpa is basically a interface 
+hibernate implements the jpa
+jpa+hibernate->orm framework
+now hibernate talk to the jdbc which is agin an interface
+and the specific db driver implemnst the jsdbc than we have the db 
+so till jsdbc,driver all we have the sql language
+but from orm framework acts as abridge between the java objects and the jdbc
+
+package com.example.jdbc;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DatabaseConnection {
+
+    private static final String URL = "jdbc:h2:~/testdb";
+    private static final String USERNAME = "sa";
+    private static final String PASSWORD = "password";
+
+    public static Connection getConnection() {
+
+        Connection connection = null;
+
+        try {
+
+            // Step 1: Load H2 Driver
+            Class.forName("org.h2.Driver");
+
+            System.out.println("H2 Driver Loaded Successfully");
+
+            // Step 2: Establish Connection
+            connection = DriverManager.getConnection(
+                    URL,
+                    USERNAME,
+                    PASSWORD
+            );
+
+            System.out.println("Database Connection Established");
+
+        } catch (ClassNotFoundException e) {
+
+            System.out.println("Driver class not found");
+            e.printStackTrace();
+
+        } catch (SQLException e) {
+
+            System.out.println("Database connection failed");
+            e.printStackTrace();
+        }
+
+        return connection;
+    }
+}
+
+
+package com.example.jdbc;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+
+public class TestConnection {
+
+    public static void main(String[] args) {
+
+        createUserTable();
+
+        insertUser("Neha", "neha@gmail.com");
+
+        insertUser("Rahul", "rahul@gmail.com");
+    }
+
+    // CREATE TABLE
+    public static void createUserTable() {
+
+        Connection connection = null;
+        Statement statement = null;
+
+        try {
+
+            connection = DatabaseConnection.getConnection();
+
+            statement = connection.createStatement();
+
+            String sqlQuery =
+                    "CREATE TABLE IF NOT EXISTS users ("
+                    + "id INT PRIMARY KEY AUTO_INCREMENT, "
+                    + "name VARCHAR(100), "
+                    + "email VARCHAR(100)"
+                    + ")";
+
+            statement.executeUpdate(sqlQuery);
+
+            System.out.println("Users table created successfully");
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        } finally {
+
+            try {
+
+                if (statement != null) {
+                    statement.close();
+                }
+
+                if (connection != null) {
+                    connection.close();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // INSERT USER
+    public static void insertUser(String name, String email) {
+
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+
+        try {
+
+            // Step 1: Get Connection
+            connection = DatabaseConnection.getConnection();
+
+            // Step 2: SQL Query
+            String insertQuery =
+                    "INSERT INTO users(name, email) VALUES(?, ?)";
+
+            // Step 3: Create PreparedStatement
+            preparedStatement =
+                    connection.prepareStatement(insertQuery);
+
+            // Step 4: Set Values
+            preparedStatement.setString(1, name);
+
+            preparedStatement.setString(2, email);
+
+            // Step 5: Execute Query
+            int rowsInserted =
+                    preparedStatement.executeUpdate();
+
+            System.out.println(
+                    rowsInserted + " user inserted successfully"
+            );
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+        } finally {
+
+            try {
+
+                if (preparedStatement != null) {
+                    preparedStatement.close();
+                }
+
+                if (connection != null) {
+                    connection.close();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+Note:diffrenrence is that while createing the preparedsttement methoid we pass query and in createstemenet we pass query durig calling excute update
+Lets see the what are the challanges with the thius
+Everey time we need to have the 
+1.load the driver
+2.then establish the conncetion
+3.hav ethe exception handling
+4.We need to close teh connection in finally by ourselves
+4.every time in tets class we are calling get connecyon its creating new connection but ideal way is to have pool o the connections
+so this we need to write the code
+
+so in pomx.xml
+we need the springboot-starter-jdbc
+and then the we also need the in pom add the driver class also
+package com.example.demo.model;
+
+public class User {
+
+    private String username;
+    private int age;
+
+    public User() {
+    }
+
+    public User(String username, int age) {
+        this.username = username;
+        this.age = age;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+}
+So this is the user pojo
+
+2.Now the Repository works like 
+
+
+@Repository
+internally behaves like:
+
+@Component
+plus Spring DB exception translation as it catches the granular exception
+package com.example.demo.repository;
+
+import com.example.demo.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public class UserRepository {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    // CREATE TABLE
+    public void createUserTable() {
+
+        String query = """
+                CREATE TABLE IF NOT EXISTS users (
+                    username VARCHAR(100),
+                    age INT
+                )
+                """;
+
+        jdbcTemplate.execute(query);
+
+        System.out.println("User table created");
+    }
+
+    // INSERT USER
+    public void insertUser(User user) {
+
+        String query = "INSERT INTO users(username, age) VALUES (?, ?)";
+
+        jdbcTemplate.update(
+                query,
+                user.getUsername(),
+                user.getAge()
+        );
+
+        System.out.println("User inserted");
+    }
+
+    // GET ALL USERS
+    public List<User> getAllUsers() {
+
+        String query = "SELECT * FROM users";
+
+        return jdbcTemplate.query(
+                query,
+                (resultSet, rowNum) -> {
+
+                    User user = new User();
+
+                    user.setUsername(
+                            resultSet.getString("username")
+                    );
+
+                    user.setAge(
+                            resultSet.getInt("age")
+                    );
+
+                    return user;
+                }
+        );
+    }
+}
+
+
+3.Business layer/service layer
+package com.example.demo.service;
+
+import com.example.demo.model.User;
+import com.example.demo.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public void createTable() {
+        userRepository.createUserTable();
+    }
+
+    public void insertUser(User user) {
+        userRepository.insertUser(user);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.getAllUsers();
+    }
+}
+
+Now
+Note:in application.properties we write the 
+datasourec.url menas the databasie connection usrename na dpassowrd so whta happens at application startup
+the jdbc templates loads the driver and get connection in DriverManager class
+and along with this it also closes the connection itself
+along with it it also create the connection pools now the default connection pool is hikaricp with maximum and minimum size as 10
+
+Note :mostly company uses the hikaricp as the 
+creating DB connections repeatedly is expensive.
+
+Connection pools:
+
+reuse connections
+improve performance
+reduce DB load
+
+
+
+
+
+
+
+
+
 
 
 
